@@ -5,15 +5,30 @@ const path = require('path');
 const fs = require('fs');
 const csv = require('csv-parser');
 const { OpenAI } = require('openai');
-require('dotenv').config();
+
+// Load environment variables
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+// Validate API key
+if (!process.env.OPENAI_API_KEY) {
+  process.stderr.write('Error: OPENAI_API_KEY environment variable is not set\n');
+  process.exit(1);
+}
 
 const app = express();
-// Important: Use Railway's PORT environment variable or fallback to 3000
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  process.stderr.write(`Error: ${err}\n`);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 
 // Initialize OpenAI with API key from environment variable
 const openai = new OpenAI({
@@ -43,9 +58,30 @@ const loadCaptionsFromCSV = () => {
   });
 };
 
-// Add a health check endpoint for Railway
+// Enhanced health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OpenAI API key is missing');
+    }
+    
+    if (!fs.existsSync('client_captions.csv')) {
+      throw new Error('CSV file not found');
+    }
+    
+    res.status(200).json({ 
+      status: 'ok',
+      environment: process.env.NODE_ENV || 'development',
+      port: PORT,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    process.stderr.write(`Health check failed: ${error}\n`);
+    res.status(500).json({ 
+      status: 'error',
+      error: error.message
+    });
+  }
 });
 
 // API endpoint to generate captions
@@ -96,7 +132,7 @@ app.post('/api/generate-caption', async (req, res) => {
     
     res.json({ caption: generatedCaption });
   } catch (error) {
-    console.error('Error generating caption:', error);
+    process.stderr.write('Error generating caption: ' + error + '\n');
     res.status(500).json({ error: 'Failed to generate caption' });
   }
 });
@@ -106,7 +142,37 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Log when server starts
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Start server
+const server = app.listen(PORT, '0.0.0.0', () => {
+  process.stdout.write('====================================\n');
+  process.stdout.write('Server started successfully\n');
+  process.stdout.write(`Port: ${PORT}\n`);
+  process.stdout.write(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
+  process.stdout.write(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}\n`);
+  process.stdout.write(`Health check endpoint: http://localhost:${PORT}/health\n`);
+  process.stdout.write('====================================\n');
+}).on('error', (err) => {
+  process.stderr.write(`Server failed to start: ${err}\n`);
+  process.exit(1);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  process.stdout.write('SIGTERM received. Shutting down gracefully...\n');
+  server.close(() => {
+    process.stdout.write('Server closed. Exiting...\n');
+    process.exit(0);
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  process.stderr.write(`Uncaught Exception: ${err}\n`);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  process.stderr.write(`Unhandled Rejection at: ${promise}, reason: ${reason}\n`);
+  process.exit(1);
 });
