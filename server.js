@@ -154,7 +154,11 @@ app.get('/', (req, res) => {
 
 // Start server
 console.log('Starting server...');
-app.listen(PORT, '0.0.0.0', () => {
+console.log('Current working directory:', process.cwd());
+console.log('Directory contents:', fs.readdirSync('.'));
+console.log('Checking for client_captions.csv:', fs.existsSync('client_captions.csv'));
+
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('====================================');
   console.log('Server started successfully');
   console.log(`Port: ${PORT}`);
@@ -164,8 +168,20 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('====================================');
 }).on('error', (err) => {
   console.error('Server failed to start:', err);
+  console.error('Error details:', {
+    code: err.code,
+    message: err.message,
+    stack: err.stack
+  });
   process.exit(1);
 });
+
+// Add request timeout handling
+server.setTimeout(30000); // 30 seconds timeout
+
+// Add keep-alive settings
+server.keepAliveTimeout = 120000; // 2 minutes
+server.headersTimeout = 120000; // 2 minutes
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
