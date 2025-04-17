@@ -31,9 +31,16 @@ app.use((err, req, res, next) => {
 });
 
 // Initialize OpenAI with API key from environment variable
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai;
+try {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  process.stdout.write('OpenAI client initialized successfully\n');
+} catch (error) {
+  process.stderr.write(`Failed to initialize OpenAI client: ${error}\n`);
+  process.exit(1);
+}
 
 // Load captions from CSV
 const loadCaptionsFromCSV = () => {
@@ -142,17 +149,26 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  process.stdout.write('====================================\n');
-  process.stdout.write('Server started successfully\n');
-  process.stdout.write(`Port: ${PORT}\n`);
-  process.stdout.write(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
-  process.stdout.write(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}\n`);
-  process.stdout.write(`Health check endpoint: http://localhost:${PORT}/health\n`);
-  process.stdout.write('====================================\n');
-}).on('error', (err) => {
-  process.stderr.write(`Server failed to start: ${err}\n`);
+// Start server with error handling
+let server;
+try {
+  server = app.listen(PORT, '0.0.0.0', () => {
+    process.stdout.write('====================================\n');
+    process.stdout.write('Server started successfully\n');
+    process.stdout.write(`Port: ${PORT}\n`);
+    process.stdout.write(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
+    process.stdout.write(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}\n`);
+    process.stdout.write(`Health check endpoint: http://localhost:${PORT}/health\n`);
+    process.stdout.write('====================================\n');
+  });
+} catch (error) {
+  process.stderr.write(`Failed to start server: ${error}\n`);
+  process.exit(1);
+}
+
+// Handle server errors
+server.on('error', (error) => {
+  process.stderr.write(`Server error: ${error}\n`);
   process.exit(1);
 });
 
