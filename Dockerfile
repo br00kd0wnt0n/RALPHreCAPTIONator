@@ -1,20 +1,31 @@
+# Use Node.js 18 Alpine as the base image
 FROM node:18-alpine
 
-# Create app directory
+# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
+# Copy package files
+COPY package.json package-lock.json* ./
 
-# Copy application code
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Copy application files
 COPY . .
 
-# Make sure the application uses the PORT environment variable
-ENV PORT=3000
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=8080
 
-# Build the application (if needed)
-RUN npm run build || echo "No build script found"
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+    && chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose the port
+EXPOSE 8080
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
