@@ -6,6 +6,12 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const { OpenAI } = require('openai');
 
+// Immediate startup logging
+console.log('Starting application...');
+console.log('Environment:', process.env.NODE_ENV || 'development');
+console.log('Port:', process.env.PORT || 8080);
+console.log('OpenAI API Key present:', !!process.env.OPENAI_API_KEY);
+
 // Load environment variables
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
@@ -13,7 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Validate API key
 if (!process.env.OPENAI_API_KEY) {
-  process.stderr.write('Error: OPENAI_API_KEY environment variable is not set\n');
+  console.error('Error: OPENAI_API_KEY environment variable is not set');
   process.exit(1);
 }
 
@@ -26,21 +32,16 @@ app.use(express.static('public'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  process.stderr.write(`Error: ${err}\n`);
+  console.error('Error:', err);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Initialize OpenAI with API key from environment variable
-let openai;
-try {
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  process.stdout.write('OpenAI client initialized successfully\n');
-} catch (error) {
-  process.stderr.write(`Failed to initialize OpenAI client: ${error}\n`);
-  process.exit(1);
-}
+console.log('Initializing OpenAI client...');
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+console.log('OpenAI client initialized');
 
 // Load captions from CSV
 const loadCaptionsFromCSV = () => {
@@ -67,6 +68,7 @@ const loadCaptionsFromCSV = () => {
 
 // Enhanced health check endpoint
 app.get('/health', (req, res) => {
+  console.log('Health check requested');
   try {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OpenAI API key is missing');
@@ -76,6 +78,7 @@ app.get('/health', (req, res) => {
       throw new Error('CSV file not found');
     }
     
+    console.log('Health check passed');
     res.status(200).json({ 
       status: 'ok',
       environment: process.env.NODE_ENV || 'development',
@@ -83,7 +86,7 @@ app.get('/health', (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    process.stderr.write(`Health check failed: ${error}\n`);
+    console.error('Health check failed:', error);
     res.status(500).json({ 
       status: 'error',
       error: error.message
@@ -139,7 +142,7 @@ app.post('/api/generate-caption', async (req, res) => {
     
     res.json({ caption: generatedCaption });
   } catch (error) {
-    process.stderr.write('Error generating caption: ' + error + '\n');
+    console.error('Error generating caption:', error);
     res.status(500).json({ error: 'Failed to generate caption' });
   }
 });
@@ -149,46 +152,38 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server with error handling
-let server;
-try {
-  server = app.listen(PORT, '0.0.0.0', () => {
-    process.stdout.write('====================================\n');
-    process.stdout.write('Server started successfully\n');
-    process.stdout.write(`Port: ${PORT}\n`);
-    process.stdout.write(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
-    process.stdout.write(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}\n`);
-    process.stdout.write(`Health check endpoint: http://localhost:${PORT}/health\n`);
-    process.stdout.write('====================================\n');
-  });
-} catch (error) {
-  process.stderr.write(`Failed to start server: ${error}\n`);
-  process.exit(1);
-}
-
-// Handle server errors
-server.on('error', (error) => {
-  process.stderr.write(`Server error: ${error}\n`);
+// Start server
+console.log('Starting server...');
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('====================================');
+  console.log('Server started successfully');
+  console.log(`Port: ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}`);
+  console.log(`Health check endpoint: http://localhost:${PORT}/health`);
+  console.log('====================================');
+}).on('error', (err) => {
+  console.error('Server failed to start:', err);
   process.exit(1);
 });
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
-  process.stdout.write('SIGTERM received. Shutting down gracefully...\n');
-  server.close(() => {
-    process.stdout.write('Server closed. Exiting...\n');
+  console.log('SIGTERM received. Shutting down gracefully...');
+  app.close(() => {
+    console.log('Server closed. Exiting...');
     process.exit(0);
   });
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  process.stderr.write(`Uncaught Exception: ${err}\n`);
+  console.error('Uncaught Exception:', err);
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  process.stderr.write(`Unhandled Rejection at: ${promise}, reason: ${reason}\n`);
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
