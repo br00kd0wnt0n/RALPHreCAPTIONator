@@ -17,9 +17,10 @@ COPY . .
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Create non-root user
+# Create non-root user and set permissions
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
-    && chown -R appuser:appgroup /app
+    && chown -R appuser:appgroup /app \
+    && chmod -R 755 /app
 
 # Switch to non-root user
 USER appuser
@@ -27,5 +28,5 @@ USER appuser
 # Expose the port
 EXPOSE 8080
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application with proper error handling
+CMD ["node", "--trace-warnings", "server.js"]
