@@ -157,6 +157,7 @@ console.log('Starting server...');
 console.log('Current working directory:', process.cwd());
 console.log('Directory contents:', fs.readdirSync('.'));
 console.log('Checking for client_captions.csv:', fs.existsSync('client_captions.csv'));
+console.log('Hostname:', require('os').hostname());
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('====================================');
@@ -164,7 +165,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Port: ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}`);
-  console.log(`Health check endpoint: http://localhost:${PORT}/health`);
+  console.log(`Health check endpoint: http://0.0.0.0:${PORT}/health`);
   console.log('====================================');
 }).on('error', (err) => {
   console.error('Server failed to start:', err);
@@ -174,6 +175,11 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     stack: err.stack
   });
   process.exit(1);
+});
+
+// Add a simple test endpoint
+app.get('/test', (req, res) => {
+  res.json({ status: 'ok', message: 'Test endpoint is working' });
 });
 
 // Add request timeout handling
