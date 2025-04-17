@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Caption Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        #loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            background-color: #f1f9ff;
+            border-left: 4px solid #3498db;
+            display: none;
+        }
+        
+        #result h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        #caption-text {
+            white-space: pre-wrap;
+        }
+
+        .option-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .option-group .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Caption Generator</h1>
+        
+        <form id="caption-form">
+            <div class="form-group">
+                <label for="draft-caption">Draft Caption or Post Description:</label>
+                <textarea id="draft-caption" name="draft-caption" placeholder="Enter your draft caption or description of what you want to post..."></textarea>
+            </div>
+            
+            <div class="option-group">
+                <div class="form-group">
+                    <label for="content-type">Content Type:</label>
+                    <select id="content-type" name="content-type">
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                        <option value="carousel">Carousel</option>
+                        <option value="story">Story</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content-theme">Content Theme:</label>
+                    <select id="content-theme" name="content-theme">
+                        <option value="product">Product</option>
+                        <option value="lifestyle">Lifestyle</option>
+                        <option value="behind-the-scenes">Behind the Scenes</option>
+                        <option value="user-generated">User Generated</option>
+                        <option value="promotion">Promotion</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="additional-notes">Additional Notes (Keywords, tone, etc.):</label>
+                <textarea id="additional-notes" name="additional-notes" placeholder="Add any specific requirements, keywords to include, or tone preferences..."></textarea>
+            </div>
+            
+            <button type="submit" id="generate-button">Generate Caption</button>
+        </form>
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Generating your caption...</p>
+        </div>
+        
+        <div id="result">
+            <h2>Generated Caption</h2>
+            <div id="caption-text"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('caption-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Show loading spinner
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            // Get form data
+            const draftCaption = document.getElementById('draft-caption').value;
+            const contentType = document.getElementById('content-type').value;
+            const contentTheme = document.getElementById('content-theme').value;
+            const additionalNotes = document.getElementById('additional-notes').value;
+            
+            try {
+                // Submit to backend API
+                const response = await fetch('/api/generate-caption', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        draftCaption,
+                        contentType,
+                        contentTheme,
+                        additionalNotes
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                // Display result
+                document.getElementById('caption-text').textContent = data.caption;
+                document.getElementById('result').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('caption-text').textContent = 'Sorry, there was an error generating your caption. Please try again.';
+                document.getElementById('result').style.display = 'block';
+            } finally {
+                // Hide loading spinner
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
