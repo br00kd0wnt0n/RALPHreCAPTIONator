@@ -5,43 +5,23 @@ const path = require('path');
 const fs = require('fs');
 const csv = require('csv-parser');
 const { OpenAI } = require('openai');
+require('dotenv').config();
 
-// Immediate startup logging
-console.log('Starting application...');
-console.log('Environment:', process.env.NODE_ENV || 'development');
-console.log('Port:', process.env.PORT || 8080);
-console.log('OpenAI API Key present:', !!process.env.OPENAI_API_KEY);
-
-// Load environment variables
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
-
-// Validate API key
-if (!process.env.OPENAI_API_KEY) {
-  console.error('Error: OPENAI_API_KEY environment variable is not set');
-  process.exit(1);
-}
+// Import Japanese caption routes
+const japaneseRoutes = require('./japanese_routes');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+// Important: Use Railway's PORT environment variable or fallback to 3000
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
-
 // Initialize OpenAI with API key from environment variable
-console.log('Initializing OpenAI client...');
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-console.log('OpenAI client initialized');
 
 // Load captions from CSV
 const loadCaptionsFromCSV = () => {
@@ -66,32 +46,9 @@ const loadCaptionsFromCSV = () => {
   });
 };
 
-// Enhanced health check endpoint
+// Add a health check endpoint for Railway
 app.get('/health', (req, res) => {
-  console.log('Health check requested');
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OpenAI API key is missing');
-    }
-    
-    if (!fs.existsSync('client_captions.csv')) {
-      throw new Error('CSV file not found');
-    }
-    
-    console.log('Health check passed');
-    res.status(200).json({ 
-      status: 'ok',
-      environment: process.env.NODE_ENV || 'development',
-      port: PORT,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(500).json({ 
-      status: 'error',
-      error: error.message
-    });
-  }
+  res.status(200).json({ status: 'ok' });
 });
 
 // API endpoint to generate captions
@@ -147,65 +104,20 @@ app.post('/api/generate-caption', async (req, res) => {
   }
 });
 
+// Japanese caption routes
+app.use(japaneseRoutes);
+
 // Serve the HTML form
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server
-console.log('Starting server...');
-console.log('Current working directory:', process.cwd());
-console.log('Directory contents:', fs.readdirSync('.'));
-console.log('Checking for client_captions.csv:', fs.existsSync('client_captions.csv'));
-console.log('Hostname:', require('os').hostname());
-
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log('====================================');
-  console.log('Server started successfully');
-  console.log(`Port: ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`OpenAI API Key present: ${!!process.env.OPENAI_API_KEY}`);
-  console.log(`Health check endpoint: http://0.0.0.0:${PORT}/health`);
-  console.log('====================================');
-}).on('error', (err) => {
-  console.error('Server failed to start:', err);
-  console.error('Error details:', {
-    code: err.code,
-    message: err.message,
-    stack: err.stack
-  });
-  process.exit(1);
+// Serve the Japanese caption form
+app.get('/japanese', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'japanese.html'));
 });
 
-// Add a simple test endpoint
-app.get('/test', (req, res) => {
-  res.json({ status: 'ok', message: 'Test endpoint is working' });
-});
-
-// Add request timeout handling
-server.setTimeout(30000); // 30 seconds timeout
-
-// Add keep-alive settings
-server.keepAliveTimeout = 120000; // 2 minutes
-server.headersTimeout = 120000; // 2 minutes
-
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  app.close(() => {
-    console.log('Server closed. Exiting...');
-    process.exit(0);
-  });
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  process.exit(1);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+// Log when server starts
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
