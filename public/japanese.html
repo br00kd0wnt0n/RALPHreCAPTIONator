@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Japanese Caption Generator | AI Captain</title>
+    <title>Japanese Caption Generator</title>
     <style>
         body {
             font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', Meiryo, sans-serif;
@@ -106,280 +106,68 @@
         #caption-text {
             white-space: pre-wrap;
         }
-
-        .option-group {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-        }
-        
-        .option-group .form-group {
-            flex: 1;
-        }
-        
-        .language-switch {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-        
-        .language-switch a {
-            color: #3498db;
-            text-decoration: none;
-            margin-left: 10px;
-        }
-        
-        .feedback-section {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            display: none;
-        }
-        
-        .rating {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .rating input[type="radio"] {
-            display: none;
-        }
-        
-        .rating label {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            background-color: #eee;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 30px;
-            cursor: pointer;
-            font-weight: normal;
-        }
-        
-        .rating input[type="radio"]:checked + label {
-            background-color: #3498db;
-            color: white;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="language-switch">
-            <a href="#" onclick="changeLanguage('ja')">日本語</a>
-            <a href="#" onclick="changeLanguage('en')">English</a>
-        </div>
-        
-        <h1 id="title">日本語キャプションジェネレーター</h1>
+        <h1>日本語キャプションジェネレーター</h1>
         
         <form id="caption-form">
             <div class="form-group">
-                <label for="draft-caption" id="label-draft">ドラフトキャプションまたは投稿の説明:</label>
+                <label for="draft-caption">ドラフトキャプションまたは投稿の説明:</label>
                 <textarea id="draft-caption" name="draft-caption" placeholder="投稿したい内容のドラフトキャプションや説明を入力してください..."></textarea>
             </div>
             
-            <div class="option-group">
-                <div class="form-group">
-                    <label for="content-type" id="label-type">コンテンツタイプ:</label>
-                    <select id="content-type" name="content-type">
-                        <option value="image">画像</option>
-                        <option value="video">動画</option>
-                        <option value="carousel">カルーセル</option>
-                        <option value="story">ストーリー</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="content-theme" id="label-theme">コンテンツテーマ:</label>
-                    <select id="content-theme" name="content-theme">
-                        <option value="product">製品</option>
-                        <option value="lifestyle">ライフスタイル</option>
-                        <option value="behind-the-scenes">舞台裏</option>
-                        <option value="user-generated">ユーザー生成</option>
-                        <option value="promotion">プロモーション</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label for="content-type">コンテンツタイプ:</label>
+                <select id="content-type" name="content-type">
+                    <option value="image">画像</option>
+                    <option value="video">動画</option>
+                    <option value="carousel">カルーセル</option>
+                    <option value="story">ストーリー</option>
+                </select>
             </div>
             
             <div class="form-group">
-                <label for="additional-notes" id="label-notes">追加メモ (キーワード、トーンなど):</label>
+                <label for="content-theme">コンテンツテーマ:</label>
+                <select id="content-theme" name="content-theme">
+                    <option value="product">製品</option>
+                    <option value="lifestyle">ライフスタイル</option>
+                    <option value="behind-the-scenes">舞台裏</option>
+                    <option value="user-generated">ユーザー生成</option>
+                    <option value="promotion">プロモーション</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="additional-notes">追加メモ (キーワード、トーンなど):</label>
                 <textarea id="additional-notes" name="additional-notes" placeholder="特定の要件、含めるキーワード、またはトーンの好みを追加してください..."></textarea>
             </div>
             
-            <button type="submit" id="generate-button">キャプションを生成</button>
+            <button type="submit">キャプションを生成</button>
         </form>
         
         <div id="loading">
             <div class="spinner"></div>
-            <p id="loading-text">キャプションを生成中...</p>
+            <p>キャプションを生成中...</p>
         </div>
         
         <div id="result">
-            <h2 id="result-title">生成されたキャプション</h2>
+            <h2>生成されたキャプション</h2>
             <div id="caption-text"></div>
-            
-            <div class="feedback-section" id="feedback-section">
-                <h3 id="feedback-title">フィードバック</h3>
-                <p id="feedback-intro">このキャプションの品質についてフィードバックをお願いします。</p>
-                
-                <form id="feedback-form">
-                    <div class="form-group">
-                        <label id="rating-label">評価:</label>
-                        <div class="rating">
-                            <input type="radio" name="rating" id="rating-1" value="1">
-                            <label for="rating-1">1</label>
-                            <input type="radio" name="rating" id="rating-2" value="2">
-                            <label for="rating-2">2</label>
-                            <input type="radio" name="rating" id="rating-3" value="3" checked>
-                            <label for="rating-3">3</label>
-                            <input type="radio" name="rating" id="rating-4" value="4">
-                            <label for="rating-4">4</label>
-                            <input type="radio" name="rating" id="rating-5" value="5">
-                            <label for="rating-5">5</label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="feedback-text" id="feedback-label">コメント:</label>
-                        <textarea id="feedback-text" name="feedback" placeholder="このキャプションについてのフィードバックを入力してください..."></textarea>
-                    </div>
-                    
-                    <button type="submit" id="submit-feedback">フィードバックを送信</button>
-                </form>
-            </div>
         </div>
     </div>
 
     <script>
-        // Form elements
-        const captionForm = document.getElementById('caption-form');
-        const feedbackForm = document.getElementById('feedback-form');
-        const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
-        const captionText = document.getElementById('caption-text');
-        const feedbackSection = document.getElementById('feedback-section');
-        
-        // Store the generated caption and original draft for feedback
-        let generatedCaption = '';
-        let originalDraft = '';
-        
-        // Language translations
-        const translations = {
-            ja: {
-                title: '日本語キャプションジェネレーター',
-                labelDraft: 'ドラフトキャプションまたは投稿の説明:',
-                labelType: 'コンテンツタイプ:',
-                labelTheme: 'コンテンツテーマ:',
-                labelNotes: '追加メモ (キーワード、トーンなど):',
-                generateButton: 'キャプションを生成',
-                loadingText: 'キャプションを生成中...',
-                resultTitle: '生成されたキャプション',
-                feedbackTitle: 'フィードバック',
-                feedbackIntro: 'このキャプションの品質についてフィードバックをお願いします。',
-                ratingLabel: '評価:',
-                feedbackLabel: 'コメント:',
-                submitFeedback: 'フィードバックを送信',
-                contentTypeOptions: {
-                    image: '画像',
-                    video: '動画',
-                    carousel: 'カルーセル',
-                    story: 'ストーリー'
-                },
-                contentThemeOptions: {
-                    product: '製品',
-                    lifestyle: 'ライフスタイル',
-                    'behind-the-scenes': '舞台裏',
-                    'user-generated': 'ユーザー生成',
-                    promotion: 'プロモーション'
-                },
-                draftPlaceholder: '投稿したい内容のドラフトキャプションや説明を入力してください...',
-                notesPlaceholder: '特定の要件、含めるキーワード、またはトーンの好みを追加してください...',
-                feedbackPlaceholder: 'このキャプションについてのフィードバックを入力してください...',
-                successMessage: 'フィードバックが正常に送信されました！',
-                errorMessage: 'エラーが発生しました。もう一度お試しください。'
-            },
-            en: {
-                title: 'Japanese Caption Generator',
-                labelDraft: 'Draft Caption or Post Description:',
-                labelType: 'Content Type:',
-                labelTheme: 'Content Theme:',
-                labelNotes: 'Additional Notes (Keywords, tone, etc.):',
-                generateButton: 'Generate Caption',
-                loadingText: 'Generating your caption...',
-                resultTitle: 'Generated Caption',
-                feedbackTitle: 'Feedback',
-                feedbackIntro: 'Please provide feedback on the quality of this caption.',
-                ratingLabel: 'Rating:',
-                feedbackLabel: 'Comments:',
-                submitFeedback: 'Submit Feedback',
-                contentTypeOptions: {
-                    image: 'Image',
-                    video: 'Video',
-                    carousel: 'Carousel',
-                    story: 'Story'
-                },
-                contentThemeOptions: {
-                    product: 'Product',
-                    lifestyle: 'Lifestyle',
-                    'behind-the-scenes': 'Behind the Scenes',
-                    'user-generated': 'User Generated',
-                    promotion: 'Promotion'
-                },
-                draftPlaceholder: 'Enter your draft caption or description of what you want to post...',
-                notesPlaceholder: 'Add any specific requirements, keywords to include, or tone preferences...',
-                feedbackPlaceholder: 'Enter your feedback about this caption...',
-                successMessage: 'Feedback submitted successfully!',
-                errorMessage: 'An error occurred. Please try again.'
-            }
-        };
-        
-        // Change language of the interface
-        function changeLanguage(lang) {
-            const t = translations[lang];
-            
-            // Update static text
-            document.getElementById('title').textContent = t.title;
-            document.getElementById('label-draft').textContent = t.labelDraft;
-            document.getElementById('label-type').textContent = t.labelType;
-            document.getElementById('label-theme').textContent = t.labelTheme;
-            document.getElementById('label-notes').textContent = t.labelNotes;
-            document.getElementById('generate-button').textContent = t.generateButton;
-            document.getElementById('loading-text').textContent = t.loadingText;
-            document.getElementById('result-title').textContent = t.resultTitle;
-            document.getElementById('feedback-title').textContent = t.feedbackTitle;
-            document.getElementById('feedback-intro').textContent = t.feedbackIntro;
-            document.getElementById('rating-label').textContent = t.ratingLabel;
-            document.getElementById('feedback-label').textContent = t.feedbackLabel;
-            document.getElementById('submit-feedback').textContent = t.submitFeedback;
-            
-            // Update placeholders
-            document.getElementById('draft-caption').placeholder = t.draftPlaceholder;
-            document.getElementById('additional-notes').placeholder = t.notesPlaceholder;
-            document.getElementById('feedback-text').placeholder = t.feedbackPlaceholder;
-            
-            // Update dropdown options
-            const contentTypeSelect = document.getElementById('content-type');
-            const contentThemeSelect = document.getElementById('content-theme');
-            
-            Array.from(contentTypeSelect.options).forEach(option => {
-                option.textContent = t.contentTypeOptions[option.value];
-            });
-            
-            Array.from(contentThemeSelect.options).forEach(option => {
-                option.textContent = t.contentThemeOptions[option.value];
-            });
-        }
-        
-        // Handle caption form submission
-        captionForm.addEventListener('submit', async function(e) {
+        document.getElementById('caption-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Show loading spinner
-            loading.style.display = 'block';
-            result.style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
             
             // Get form data
-            originalDraft = document.getElementById('draft-caption').value;
+            const draftCaption = document.getElementById('draft-caption').value;
             const contentType = document.getElementById('content-type').value;
             const contentTheme = document.getElementById('content-theme').value;
             const additionalNotes = document.getElementById('additional-notes').value;
@@ -392,41 +180,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        originalDraft,
-                        generatedCaption,
-                        feedback: feedbackText,
-                        rating
-                    }),
-                });
-                
-                if (response.ok) {
-                    alert(document.documentElement.lang === 'ja' ? 
-                        'フィードバックが正常に送信されました！' : 
-                        'Feedback submitted successfully!');
-                    
-                    // Reset the feedback form
-                    document.getElementById('feedback-text').value = '';
-                    document.getElementById('rating-3').checked = true;
-                } else {
-                    throw new Error('Failed to submit feedback');
-                }
-            } catch (error) {
-                console.error('Error submitting feedback:', error);
-                alert(document.documentElement.lang === 'ja' ? 
-                    'エラーが発生しました。もう一度お試しください。' : 
-                    'An error occurred. Please try again.');
-            }
-        });
-        
-        // Set default language to Japanese
-        document.documentElement.lang = 'ja';
-        changeLanguage('ja');
-    </script>
-</body>
-</html>
-                    },
-                    body: JSON.stringify({
-                        draftCaption: originalDraft,
+                        draftCaption,
                         contentType,
                         contentTheme,
                         additionalNotes
@@ -435,33 +189,18 @@
                 
                 const data = await response.json();
                 
-                // Store the generated caption for feedback
-                generatedCaption = data.caption;
-                
                 // Display result
-                captionText.textContent = generatedCaption;
-                result.style.display = 'block';
-                feedbackSection.style.display = 'block';
+                document.getElementById('caption-text').textContent = data.caption;
+                document.getElementById('result').style.display = 'block';
             } catch (error) {
                 console.error('Error:', error);
-                captionText.textContent = '申し訳ありませんが、キャプションの生成中にエラーが発生しました。もう一度お試しください。';
-                result.style.display = 'block';
-                feedbackSection.style.display = 'none';
+                document.getElementById('caption-text').textContent = '申し訳ありませんが、キャプションの生成中にエラーが発生しました。もう一度お試しください。';
+                document.getElementById('result').style.display = 'block';
             } finally {
                 // Hide loading spinner
-                loading.style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
             }
         });
-        
-        // Handle feedback form submission
-        feedbackForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const feedbackText = document.getElementById('feedback-text').value;
-            const rating = document.querySelector('input[name="rating"]:checked').value;
-            
-            try {
-                const response = await fetch('/api/japanese-caption/feedback', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+    </script>
+</body>
+</html>
