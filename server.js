@@ -171,7 +171,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve a multilingual form with language toggle
+// Serve a simple form with language toggle
 app.get('/caption', (req, res) => {
   res.set('Content-Type', 'text/html');
   res.send(`
