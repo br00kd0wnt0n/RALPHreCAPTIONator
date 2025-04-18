@@ -80,4 +80,38 @@ button:hover {
 
 #toggleLanguage:hover {
     background-color: #5a6268;
+}
+
+select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: white;
+    font-size: 14px;
+}
+
+select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.language-toggle button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.language-toggle button:hover {
+    background-color: #5a6268;
+}
+
+.ja {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 } 
