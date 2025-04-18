@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
             language: currentLanguage
         };
 
+        console.log('Sending request with data:', formData);
+
         try {
             const response = await fetch('/api/generate-caption', {
                 method: 'POST',
@@ -30,16 +32,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
+            const data = await response.json();
+            
             if (!response.ok) {
-                throw new Error('Failed to generate caption');
+                throw new Error(data.error || 'Failed to generate caption');
             }
 
-            const data = await response.json();
             generatedCaptionDiv.textContent = data.caption;
             resultDiv.classList.remove('hidden');
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to generate caption. Please try again.');
+            console.error('Error details:', error);
+            alert(`Failed to generate caption: ${error.message}`);
         }
     });
 }); 
