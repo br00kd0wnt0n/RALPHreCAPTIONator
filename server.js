@@ -60,20 +60,35 @@ app.post('/api/generate-caption', async (req, res) => {
   try {
     const { draftCaption, contentType, contentTheme, additionalNotes, language } = req.body;
     
+    // Log the request data (remove in production)
+    console.log('Request body:', {
+      draftCaption: draftCaption ? 'present' : 'missing',
+      contentType: contentType ? 'present' : 'missing',
+      contentTheme: contentTheme ? 'present' : 'missing',
+      language: language || 'en'
+    });
+
     // Validate required fields
     if (!draftCaption) {
       return res.status(400).json({ error: 'Draft caption is required' });
     }
     
-    // Load reference captions from CSV
+    // Load reference captions with error logging
     let referenceCaptions;
     try {
       referenceCaptions = await loadCaptionsFromCSV();
-    } catch (error) {
-      console.error('Error loading captions:', error);
+      console.log('Loaded captions count:', referenceCaptions.length);
+    } catch (csvError) {
+      console.error('CSV loading error:', csvError);
       referenceCaptions = ['Default caption example'];
     }
     
+    // Log OpenAI configuration (remove API key from logs)
+    console.log('OpenAI config:', {
+      hasApiKey: !!process.env.OPENAI_API_KEY,
+      model: "gpt-4"
+    });
+
     // Create context with reference captions (limit to prevent token overflow)
     const captionExamples = referenceCaptions.slice(0, 8).join('\n\n');
     
@@ -158,9 +173,9 @@ ${captionExamples}
       Keep hashtags if present and maintain our brand's style.`;
     }
     
-    // Call OpenAI API
+    // Create OpenAI request
     const completion = await openai.chat.completions.create({
-      model: "gpt-4", // or use "gpt-3.5-turbo" for a more economical option
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -176,13 +191,22 @@ ${captionExamples}
     });
     
     const generatedCaption = completion.choices[0].message.content;
-    
     res.json({ caption: generatedCaption });
+    
   } catch (error) {
-    console.error('Error generating caption:', error);
+    // Enhanced error logging
+    console.error('Detailed error:', {
+      message: error.message,
+      type: error.constructor.name,
+      stack: error.stack,
+      status: error.status || 500
+    });
+
+    // Send a more informative error response
     res.status(500).json({ 
       error: 'Failed to generate caption',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      details: error.message,
+      type: error.constructor.name
     });
   }
 });
