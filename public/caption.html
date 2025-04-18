@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caption Generator</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Caption Generator</h1>
+        <div class="language-toggle">
+            <button id="toggleLanguage">Switch to Japanese</button>
+        </div>
+        <form id="captionForm">
+            <div class="form-group">
+                <label for="draftCaption">Draft Caption:</label>
+                <textarea id="draftCaption" name="draftCaption" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="contentType">Content Type:</label>
+                <input type="text" id="contentType" name="contentType" required>
+            </div>
+            <div class="form-group">
+                <label for="contentTheme">Content Theme:</label>
+                <input type="text" id="contentTheme" name="contentTheme" required>
+            </div>
+            <div class="form-group">
+                <label for="additionalNotes">Additional Notes:</label>
+                <textarea id="additionalNotes" name="additionalNotes"></textarea>
+            </div>
+            <button type="submit">Generate Caption</button>
+        </form>
+        <div id="result" class="hidden">
+            <h2>Generated Caption</h2>
+            <div id="generatedCaption"></div>
+        </div>
+    </div>
+    <script src="/script.js"></script>
+</body>
+</html> 
