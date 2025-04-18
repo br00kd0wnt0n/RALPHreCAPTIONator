@@ -8,23 +8,22 @@ const { OpenAI } = require('openai');
 require('dotenv').config();
 
 const app = express();
-// Important: Use Railway's PORT environment variable or fallback to 3000
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Initialize OpenAI with API key from environment variable
+// Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 // Load captions from CSV
-const loadCaptionsFromCSV = (filePath) => {
+const loadCaptionsFromCSV = () => {
   return new Promise((resolve, reject) => {
     const captions = [];
-    fs.createReadStream(filePath)
+    fs.createReadStream('client_captions.csv')
       .pipe(csv())
       .on('data', (row) => {
         // Adjust field name based on your CSV structure
@@ -44,47 +43,18 @@ const loadCaptionsFromCSV = (filePath) => {
   });
 };
 
-// Log feedback
-const logFeedback = (feedbackData) => {
-  const timestamp = new Date().toISOString();
-  const feedbackEntry = {
-    timestamp,
-    ...feedbackData
-  };
-  
-  // Create the feedback directory if it doesn't exist
-  if (!fs.existsSync('./feedback')) {
-    try {
-      fs.mkdirSync('./feedback');
-    } catch (err) {
-      console.error('Error creating feedback directory:', err);
-      return;
-    }
-  }
-  
-  // Append to the feedback log file
-  const feedbackString = JSON.stringify(feedbackEntry) + '\n';
-  fs.appendFile('./feedback/caption_feedback.jsonl', feedbackString, (err) => {
-    if (err) {
-      console.error('Error saving feedback:', err);
-    } else {
-      console.log('Feedback saved successfully');
-    }
-  });
-};
-
 // Add a health check endpoint for Railway
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// API endpoint to generate standard captions
+// API endpoint to generate captions
 app.post('/api/generate-caption', async (req, res) => {
   try {
     const { draftCaption, contentType, contentTheme, additionalNotes } = req.body;
     
     // Load reference captions from CSV
-    const referenceCaptions = await loadCaptionsFromCSV('client_captions.csv');
+    const referenceCaptions = await loadCaptionsFromCSV();
     
     // Create context with reference captions (limit to prevent token overflow)
     const captionExamples = referenceCaptions.slice(0, 10).join('\n\n');
@@ -138,13 +108,11 @@ app.post('/api/japanese-caption', async (req, res) => {
     
     // Validate input
     if (!draftCaption) {
-      return res.status(400).json({ 
-        error: 'Draft caption is required' 
-      });
+      return res.status(400).json({ error: 'Draft caption is required' });
     }
     
     // Load reference captions from CSV
-    const referenceCaptions = await loadCaptionsFromCSV('client_captions.csv');
+    const referenceCaptions = await loadCaptionsFromCSV();
     
     if (referenceCaptions.length === 0) {
       throw new Error('No example captions found. Please check your CSV file.');
@@ -244,259 +212,102 @@ ${formattedExamples}
   }
 });
 
-// Route for submitting feedback
-app.post('/api/caption-feedback', (req, res) => {
-  try {
-    const { originalDraft, generatedCaption, feedback, rating, language } = req.body;
-    
-    // Validate input
-    if (!originalDraft || !generatedCaption || !feedback) {
-      return res.status(400).json({ 
-        error: 'Original draft, generated caption, and feedback are required' 
-      });
-    }
-    
-    // Log the feedback
-    logFeedback({
-      originalDraft,
-      generatedCaption,
-      feedback,
-      rating: rating || '3',
-      language: language || 'en'
-    });
-    
-    res.json({ 
-      success: true,
-      message: 'Feedback recorded successfully'
-    });
-  } catch (error) {
-    console.error('Error in feedback route:', error);
-    res.status(500).json({ 
-      error: 'Failed to record feedback',
-      message: error.message
-    });
-  }
-});
-
 // Serve the HTML form
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve the Japanese caption form
+// Create a very simple Japanese form
 app.get('/japanese', (req, res) => {
-  // Send the Japanese form as a response directly
-  const japaneseForm = `<!DOCTYPE html>
-<html lang="ja">
+  res.set('Content-Type', 'text/html');
+  res.send(`
+<!DOCTYPE html>
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Japanese Caption Generator</title>
     <style>
-        body {
-            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', Meiryo, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
-        
-        .container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin-top: 0;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        textarea, input, select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 15px;
-            font-family: inherit;
-        }
-        
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background-color 0.2s;
-        }
-        
-        button:hover {
-            background-color: #2980b9;
-        }
-        
-        #loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 4px;
-            background-color: #f1f9ff;
-            border-left: 4px solid #3498db;
-            display: none;
-        }
-        
-        #result h2 {
-            margin-top: 0;
-            color: #2c3e50;
-        }
-        
-        #caption-text {
-            white-space: pre-wrap;
-        }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #0066ff; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; padding: 10px; background: #f0f0f0; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>日本語キャプションジェネレーター</h1>
-        
-        <form id="caption-form">
-            <div class="form-group">
-                <label for="draft-caption">ドラフトキャプションまたは投稿の説明:</label>
-                <textarea id="draft-caption" name="draft-caption" placeholder="投稿したい内容のドラフトキャプションや説明を入力してください..."></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="content-type">コンテンツタイプ:</label>
-                <select id="content-type" name="content-type">
-                    <option value="image">画像</option>
-                    <option value="video">動画</option>
-                    <option value="carousel">カルーセル</option>
-                    <option value="story">ストーリー</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="content-theme">コンテンツテーマ:</label>
-                <select id="content-theme" name="content-theme">
-                    <option value="product">製品</option>
-                    <option value="lifestyle">ライフスタイル</option>
-                    <option value="behind-the-scenes">舞台裏</option>
-                    <option value="user-generated">ユーザー生成</option>
-                    <option value="promotion">プロモーション</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="additional-notes">追加メモ (キーワード、トーンなど):</label>
-                <textarea id="additional-notes" name="additional-notes" placeholder="特定の要件、含めるキーワード、またはトーンの好みを追加してください..."></textarea>
-            </div>
-            
-            <button type="submit">キャプションを生成</button>
-        </form>
-        
-        <div id="loading">
-            <div class="spinner"></div>
-            <p>キャプションを生成中...</p>
+    <h1>Japanese Caption Generator</h1>
+    <form id="captionForm">
+        <div>
+            <label for="draft">ドラフトキャプション:</label>
+            <textarea id="draft" required></textarea>
         </div>
-        
-        <div id="result">
-            <h2>生成されたキャプション</h2>
-            <div id="caption-text"></div>
+        <div>
+            <label for="type">コンテンツタイプ:</label>
+            <select id="type">
+                <option value="image">画像</option>
+                <option value="video">動画</option>
+            </select>
         </div>
-    </div>
+        <div>
+            <label for="theme">テーマ:</label>
+            <select id="theme">
+                <option value="product">製品</option>
+                <option value="lifestyle">ライフスタイル</option>
+            </select>
+        </div>
+        <div>
+            <label for="notes">追加メモ:</label>
+            <textarea id="notes"></textarea>
+        </div>
+        <button type="submit">生成</button>
+    </form>
+    <div id="loading" style="display:none;">処理中...</div>
+    <div id="result" style="display:none;"></div>
 
     <script>
-        document.getElementById('caption-form').addEventListener('submit', async function(e) {
+        document.getElementById('captionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Show loading spinner
             document.getElementById('loading').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             
-            // Get form data
-            const draftCaption = document.getElementById('draft-caption').value;
-            const contentType = document.getElementById('content-type').value;
-            const contentTheme = document.getElementById('content-theme').value;
-            const additionalNotes = document.getElementById('additional-notes').value;
+            const draft = document.getElementById('draft').value;
+            const type = document.getElementById('type').value;
+            const theme = document.getElementById('theme').value;
+            const notes = document.getElementById('notes').value;
             
             try {
-                // Submit to backend API
                 const response = await fetch('/api/japanese-caption', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        draftCaption,
-                        contentType,
-                        contentTheme,
-                        additionalNotes
+                        draftCaption: draft,
+                        contentType: type,
+                        contentTheme: theme,
+                        additionalNotes: notes
                     }),
                 });
                 
                 const data = await response.json();
                 
-                // Display result
-                document.getElementById('caption-text').textContent = data.caption;
+                document.getElementById('result').textContent = data.caption;
                 document.getElementById('result').style.display = 'block';
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('caption-text').textContent = '申し訳ありませんが、キャプションの生成中にエラーが発生しました。もう一度お試しください。';
+                document.getElementById('result').textContent = 'エラーが発生しました。もう一度お試しください。';
                 document.getElementById('result').style.display = 'block';
             } finally {
-                // Hide loading spinner
                 document.getElementById('loading').style.display = 'none';
             }
         });
     </script>
 </body>
-</html>`;
-
-  res.send(japaneseForm);
+</html>
+  `);
 });
 
-// Log when server starts
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
