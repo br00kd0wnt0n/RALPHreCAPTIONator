@@ -23,22 +23,29 @@ const openai = new OpenAI({
 const loadCaptionsFromCSV = () => {
   return new Promise((resolve, reject) => {
     const captions = [];
+    // Add error handling for file not found
+    if (!fs.existsSync('client_captions.csv')) {
+      console.warn('CSV file not found, using empty captions array');
+      return resolve([]);
+    }
+    
     fs.createReadStream('client_captions.csv')
       .pipe(csv())
       .on('data', (row) => {
         // Adjust field name based on your CSV structure
-        const captionText = row.caption || row.text || row.content || '';
+        const captionText = row.text || ''; // Use 'text' field from your CSV
         if (captionText) {
           captions.push(captionText);
         }
       })
       .on('end', () => {
         console.log(`Loaded ${captions.length} captions from CSV file`);
-        resolve(captions);
+        resolve(captions.length > 0 ? captions : ['Default caption example']);
       })
       .on('error', (error) => {
         console.error('Error loading captions:', error);
-        reject(error);
+        // Don't fail completely, just use empty array
+        resolve(['Default caption example']);
       });
   });
 };
@@ -53,8 +60,19 @@ app.post('/api/generate-caption', async (req, res) => {
   try {
     const { draftCaption, contentType, contentTheme, additionalNotes, language } = req.body;
     
+    // Validate required fields
+    if (!draftCaption) {
+      return res.status(400).json({ error: 'Draft caption is required' });
+    }
+    
     // Load reference captions from CSV
-    const referenceCaptions = await loadCaptionsFromCSV();
+    let referenceCaptions;
+    try {
+      referenceCaptions = await loadCaptionsFromCSV();
+    } catch (error) {
+      console.error('Error loading captions:', error);
+      referenceCaptions = ['Default caption example'];
+    }
     
     // Create context with reference captions (limit to prevent token overflow)
     const captionExamples = referenceCaptions.slice(0, 8).join('\n\n');
@@ -162,7 +180,10 @@ ${captionExamples}
     res.json({ caption: generatedCaption });
   } catch (error) {
     console.error('Error generating caption:', error);
-    res.status(500).json({ error: 'Failed to generate caption' });
+    res.status(500).json({ 
+      error: 'Failed to generate caption',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
   }
 });
 
