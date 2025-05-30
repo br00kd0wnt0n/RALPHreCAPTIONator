@@ -1,4 +1,4 @@
-# Ralph's Re-Caption-ator™ 
+# Ralph's Re-Caption-ator 
 ### Korean Air Japan Edition ✈️
 
 A specialized AI-powered tool that rewrites agency social media captions to match Korean Air Japan's authentic voice and style, based on a year's worth of their actual tweets.
