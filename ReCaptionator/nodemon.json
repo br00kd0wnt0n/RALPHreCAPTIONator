@@ -1,6 +1,0 @@
-{
-  "watch": ["src", "public"],
-  "ext": "js,json,html,css",
-  "ignore": ["node_modules", "data/*.json"],
-  "exec": "node src/server.js"
-} 
