@@ -21,6 +21,17 @@ const makeDistortionCurve = (amount) => {
 
 
 function SonicPrismApp() {
+  // Add error boundary state
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Error handling wrapper
+  const handleError = (error, context = 'Unknown') => {
+    console.error(`Error in ${context}:`, error);
+    setErrorMessage(`${context}: ${error.message}`);
+    setHasError(true);
+  };
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -154,9 +165,13 @@ function SonicPrismApp() {
 
   // Initialize audio context and setup
   const initAudio = async () => {
-    if (!audioContextRef.current) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      audioContextRef.current = new AudioContext();
+    try {
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+          throw new Error('Web Audio API not supported');
+        }
+        audioContextRef.current = new AudioContext();
       
       // Handle Chrome mobile autoplay restrictions
       if (audioContextRef.current.state === 'suspended') {
@@ -308,6 +323,10 @@ function SonicPrismApp() {
       tremoloLFORef.current.start();
       pitchLFORef.current.start();
       filterLFORef.current.start();
+      }
+    } catch (error) {
+      handleError(error, 'Audio Initialization');
+      throw error;
     }
   };
 
@@ -315,10 +334,20 @@ function SonicPrismApp() {
   const startCamera = async () => {
     try {
       console.log('Requesting camera access...');
+      console.log('User agent:', navigator.userAgent);
+      console.log('Platform:', navigator.platform);
       
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('getUserMedia not supported');
         alert('Camera not supported on this device or browser');
+        return;
+      }
+      
+      // Check Web Audio API support
+      if (!window.AudioContext && !window.webkitAudioContext) {
+        console.error('Web Audio API not supported');
+        alert('Audio synthesis not supported on this browser');
         return;
       }
       
@@ -380,6 +409,7 @@ function SonicPrismApp() {
         errorMessage += `Error: ${err.message}`;
       }
       
+      handleError(err, 'Camera Access');
       alert(errorMessage);
     }
   };
@@ -765,6 +795,48 @@ function SonicPrismApp() {
     boxShadow: `0 0 20px ${colors.primary}33, inset 0 0 20px ${colors.surface}`,
     transition: 'all 0.2s ease'
   };
+
+  // Early return for error state
+  if (hasError) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        color: '#ff0080',
+        padding: '20px',
+        textAlign: 'center',
+        fontFamily: 'Monaco, "Lucida Console", "Courier New", monospace'
+      }}>
+        <h1 style={{ color: '#ff0080', marginBottom: '20px' }}>🚨 ERROR DETECTED</h1>
+        <div style={{ 
+          background: '#1a1a2e', 
+          border: '2px solid #ff0080', 
+          padding: '20px', 
+          borderRadius: '5px',
+          marginBottom: '20px'
+        }}>
+          <pre style={{ fontSize: '12px', whiteSpace: 'pre-wrap' }}>{errorMessage}</pre>
+        </div>
+        <button 
+          onClick={() => window.location.reload()} 
+          style={{
+            background: '#ff0080',
+            color: '#0a0a0a',
+            border: 'none',
+            padding: '15px 30px',
+            fontSize: '16px',
+            fontFamily: 'inherit',
+            cursor: 'pointer'
+          }}
+        >
+          🔄 RELOAD APP
+        </button>
+        <div style={{ marginTop: '20px', fontSize: '12px', opacity: 0.7 }}>
+          Check browser console for detailed error information
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
