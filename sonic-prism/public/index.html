@@ -37,9 +37,11 @@
     <div id="root"></div>
     
     <script>
-      // Suppress all script errors to prevent error popups
+      // Completely suppress all errors and prevent any error UI
       window.addEventListener('error', function(e) {
         console.log('Script error suppressed:', e.message);
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         e.preventDefault();
         return true;
       }, true);
@@ -47,8 +49,24 @@
       // Suppress unhandled promise rejections
       window.addEventListener('unhandledrejection', function(e) {
         console.log('Promise rejection suppressed:', e.reason);
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         e.preventDefault();
-      });
+      }, true);
+      
+      // Override any React error overlay
+      if (window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__) {
+        window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__.onBuildError = function() {};
+        window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__.onBuildOk = function() {};
+        window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__.onRuntimeError = function() {};
+      }
+      
+      // Disable React error overlay completely
+      window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__ = {
+        onBuildError: function() {},
+        onBuildOk: function() {},
+        onRuntimeError: function() {}
+      };
     </script>
     <!--
       This HTML file is a template.

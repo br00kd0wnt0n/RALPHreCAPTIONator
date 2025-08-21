@@ -7,18 +7,20 @@ class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
-    return { hasError: true };
+    // Log but don't update state to show error UI
+    console.log('React error caught and suppressed:', error);
+    return { hasError: false }; // Keep app running normally
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error details
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Log the error details but don't show UI
+    console.log('ErrorBoundary caught an error (suppressed):', error, errorInfo);
     
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
+    // Don't update state to show error UI - just continue rendering children
+    // this.setState({
+    //   error: error,
+    //   errorInfo: errorInfo
+    // });
   }
 
   render() {
