@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // Utility to map a range of values
 const mapRange = (value, inMin, inMax, outMin, outMax) => {
@@ -75,9 +75,7 @@ function SonicPrismApp() {
   const [delayTime, setDelayTime] = useState(0.9);
   const [delayFeedback, setDelayFeedback] = useState(0.7);
   const [reverbMix, setReverbMix] = useState(0.9);
-  const [tremoloRate, setTremoloRate] = useState(4);
   const [tremoloDepth, setTremoloDepth] = useState(0.85);
-  const [pitchLFORate, setPitchLFORate] = useState(0.5);
   const [pitchLFODepth, setPitchLFODepth] = useState(20);
   const [arpEnabled, setArpEnabled] = useState(true);
   const [arpSpeed, setArpSpeed] = useState(300);
@@ -415,7 +413,7 @@ function SonicPrismApp() {
   };
 
   // Analyze video frame
-  const analyzeFrame = () => {
+  const analyzeFrame = useCallback(() => {
     if (!canvasRef.current || !videoRef.current) {
       console.log('Canvas or video not ready');
       return;
@@ -669,9 +667,11 @@ function SonicPrismApp() {
     } catch (err) {
       console.error('Error analyzing frame:', err);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Start analysis loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let animationFrameId;
     let retryCount = 0;
@@ -702,7 +702,7 @@ function SonicPrismApp() {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isActive]);
+  }, [isActive, analyzeFrame]);
 
   // Stop everything
   const stopSonicPrism = () => {
