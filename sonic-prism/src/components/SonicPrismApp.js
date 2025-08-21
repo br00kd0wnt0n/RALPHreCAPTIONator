@@ -332,8 +332,8 @@ function SonicPrismApp() {
   const startCamera = async () => {
     try {
       console.log('Requesting camera access...');
-      console.log('User agent:', navigator.userAgent);
-      console.log('Platform:', navigator.platform);
+      console.log('User agent:', navigator?.userAgent || 'Unknown');
+      console.log('Platform:', navigator?.platform || 'Unknown');
       
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -343,7 +343,7 @@ function SonicPrismApp() {
       }
       
       // Check Web Audio API support
-      if (!window.AudioContext && !window.webkitAudioContext) {
+      if (typeof window === 'undefined' || (!window.AudioContext && !window.webkitAudioContext)) {
         console.error('Web Audio API not supported');
         alert('Audio synthesis not supported on this browser');
         return;
@@ -375,19 +375,31 @@ function SonicPrismApp() {
       console.log('Waiting for video element to be available...');
       // Wait a bit for React to render the video element
       setTimeout(() => {
-        if (videoRef.current && streamRef.current) {
-          console.log('Setting video source');
-          videoRef.current.srcObject = streamRef.current;
-          
-          // Play video when metadata loads
-          videoRef.current.onloadedmetadata = () => {
-            console.log('Video metadata loaded');
-            videoRef.current.play().then(() => {
-              console.log('Video playing, dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
-            }).catch(err => {
-              console.error('Error playing video:', err);
-            });
-          };
+        try {
+          if (videoRef.current && streamRef.current) {
+            console.log('Setting video source');
+            videoRef.current.srcObject = streamRef.current;
+            
+            // Play video when metadata loads
+            videoRef.current.onloadedmetadata = () => {
+              console.log('Video metadata loaded');
+              if (videoRef.current) {
+                videoRef.current.play().then(() => {
+                  console.log('Video playing, dimensions:', videoRef.current?.videoWidth || 0, 'x', videoRef.current?.videoHeight || 0);
+                }).catch(err => {
+                  console.error('Error playing video:', err);
+                });
+              }
+            };
+            
+            // Add error handler for video element
+            videoRef.current.onerror = (err) => {
+              console.error('Video element error:', err);
+            };
+          }
+        } catch (err) {
+          console.error('Error setting up video:', err);
+          handleError(err, 'Video Setup');
         }
       }, 100);
       
