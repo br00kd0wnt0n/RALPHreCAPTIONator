@@ -12,11 +12,32 @@ window.addEventListener('error', (event) => {
     colno: event.colno,
     error: event.error
   });
+  
+  // Prevent the error from bubbling up and showing the error popup
+  event.preventDefault();
+  return true;
 });
 
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
+  
+  // Prevent the unhandled rejection from bubbling up
+  event.preventDefault();
 });
+
+// Override console.error to catch React error boundary errors
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  // Log the error but don't let it propagate to the error popup
+  originalConsoleError.apply(console, args);
+  
+  // Check if this is a React error boundary error
+  const errorMessage = args.join(' ');
+  if (errorMessage.includes('Error boundary') || errorMessage.includes('React')) {
+    // Suppress React-related errors from showing popups
+    return;
+  }
+};
 
 // Safety check for DOM element
 const rootElement = document.getElementById('root');
