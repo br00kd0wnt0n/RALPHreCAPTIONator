@@ -991,7 +991,7 @@ function VisualSynthV2() {
                 border: `2px solid ${teColors.grid}`,
                 borderRadius: '0px',
                 color: teColors.text,
-                padding: '10px 8px', // Compact padding for mobile
+                padding: '8px 6px', // Very compact padding for mobile
                 cursor: 'pointer',
                 
                 // Layout
@@ -1047,21 +1047,21 @@ function VisualSynthV2() {
               <div style={{ position: 'relative', zIndex: 2 }}>
                 {/* Preset title */}
                 <div style={{
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: '600',
-                  marginBottom: '6px',
+                  marginBottom: '4px',
                   letterSpacing: '0.05em',
-                  lineHeight: '1.2'
+                  lineHeight: '1.1'
                 }}>
                   {preset.name}
                 </div>
                 
                 {/* Description */}
                 <div style={{
-                  fontSize: '10px',
+                  fontSize: '9px',
                   color: teColors.textDim,
-                  marginBottom: '8px',
-                  lineHeight: '1.3',
+                  marginBottom: '6px',
+                  lineHeight: '1.2',
                   opacity: 0.9
                 }}>
                   {preset.description}
@@ -1070,11 +1070,11 @@ function VisualSynthV2() {
               
               {/* Technical info */}
               <div style={{
-                fontSize: '9px',
+                fontSize: '8px',
                 color: teColors.textDim,
                 textAlign: 'left',
                 fontFamily: 'monospace',
-                lineHeight: '1.3',
+                lineHeight: '1.1',
                 position: 'relative',
                 zIndex: 2,
                 opacity: 0.8
