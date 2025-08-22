@@ -1010,6 +1010,10 @@ function VisualSynthV2() {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 minHeight: 0, // Allow button to shrink
+                maxHeight: 'none', // Prevent CSS override
+                height: 'auto', // Explicit height
+                boxSizing: 'border-box', // Ensure consistent sizing
+                outline: 'none', // Remove focus outline
                 ...teFont
               }}
               onMouseEnter={(e) => {
