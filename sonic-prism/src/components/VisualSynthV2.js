@@ -30,6 +30,10 @@ const PRESET_CONFIGS = [
       freqChangeThreshold: 40, // Higher threshold = longer notes
       movementThreshold: 50    // Higher threshold = less sensitive
     },
+    backgroundAudio: {
+      file: '/audio/warm_analog.m4a',
+      volume: 0.3 // Mix level with synth
+    },
     description: 'Rich analog warmth with slow tremolo and gentle filter sweep'
   },
   {
@@ -48,6 +52,10 @@ const PRESET_CONFIGS = [
       speed: 1.5, // Medium sweep
       depth: 800, // Wide sweep for brightness
       baseFreq: 1200
+    },
+    backgroundAudio: {
+      file: '/audio/crystal_lead.m4a',
+      volume: 0.25 // Slightly lower for brighter preset
     },
     description: 'Wide-range crystalline leads with dramatic pitch bends and bandpass sweep'
   },
@@ -72,6 +80,10 @@ const PRESET_CONFIGS = [
       freqChangeThreshold: 60, // Very high threshold = very long notes
       movementThreshold: 80    // Very high threshold = much less sensitive
     },
+    backgroundAudio: {
+      file: '/audio/sub_bass.m4a',
+      volume: 0.4 // Higher for bass-heavy preset
+    },
     description: 'Deep sub-bass with ultra-slow highpass sweep'
   },
   {
@@ -90,6 +102,10 @@ const PRESET_CONFIGS = [
       speed: 3.0, // Fast aggressive sweep
       depth: 1200, // Wide dramatic sweep
       baseFreq: 600
+    },
+    backgroundAudio: {
+      file: '/audio/square_punch.m4a',
+      volume: 0.35 // Moderate for aggressive preset
     },
     description: 'Wide-range aggressive squares with extreme pitch bends and filter sweep'
   }
@@ -157,6 +173,10 @@ function VisualSynthV2() {
   // Filter sweep LFO
   const filterSweepLFORef = useRef(null);
   const sweepLFOGainRef = useRef(null);
+  
+  // Background audio
+  const backgroundAudioRef = useRef(null);
+  const backgroundGainRef = useRef(null);
   
   // Effects chain
   const delayRef = useRef(null);
@@ -346,6 +366,38 @@ function VisualSynthV2() {
   };
 
   // Performance monitoring
+  // Load and setup background audio for preset
+  const loadBackgroundAudio = async (preset) => {
+    if (!preset.backgroundAudio || !audioContextRef.current) return;
+    
+    try {
+      // Create HTML audio element for background loop
+      backgroundAudioRef.current = new Audio(preset.backgroundAudio.file);
+      backgroundAudioRef.current.loop = true;
+      backgroundAudioRef.current.crossOrigin = "anonymous";
+      
+      // Create MediaElementSource to connect to Web Audio
+      const source = audioContextRef.current.createMediaElementSource(backgroundAudioRef.current);
+      
+      // Create gain node for background audio volume
+      backgroundGainRef.current = audioContextRef.current.createGain();
+      backgroundGainRef.current.gain.value = preset.backgroundAudio.volume;
+      
+      // Connect background audio through effects chain
+      source.connect(backgroundGainRef.current);
+      backgroundGainRef.current.connect(dryGainRef.current);
+      
+      // Also send background audio to reverb and delay
+      backgroundGainRef.current.connect(reverbRef.current);
+      backgroundGainRef.current.connect(delayRef.current);
+      
+      console.log(`Background audio loaded: ${preset.backgroundAudio.file}`);
+      
+    } catch (error) {
+      console.error('Error loading background audio:', error);
+    }
+  };
+
   // Apply preset-specific effect parameters
   const applyPresetParameters = (preset) => {
     if (!audioContextRef.current || !preset) return;
@@ -462,9 +514,23 @@ function VisualSynthV2() {
             lastFrequencyRef.current = preset.rootNote;
             // Apply preset-specific parameters
             applyPresetParameters(preset);
+            // Load background audio for this preset
+            loadBackgroundAudio(preset).then(() => {
+              console.log('Background audio loaded successfully');
+            }).catch(e => {
+              console.log('Background audio loading failed:', e);
+            });
             // Start audio fade-in once camera is ready
             setTimeout(() => {
               fadeInAudio();
+              // Start background audio after fade-in begins
+              setTimeout(() => {
+                if (backgroundAudioRef.current) {
+                  backgroundAudioRef.current.play().catch(e => {
+                    console.log('Background audio play failed:', e);
+                  });
+                }
+              }, 1000); // Wait for audio to load
             }, 500); // Small delay to ensure video is stable
           };
         }
@@ -784,6 +850,13 @@ function VisualSynthV2() {
         }
       }
       
+      // Stop background audio
+      if (backgroundAudioRef.current) {
+        backgroundAudioRef.current.pause();
+        backgroundAudioRef.current.currentTime = 0;
+        backgroundAudioRef.current = null;
+      }
+      
       // Stop video stream
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -810,6 +883,7 @@ function VisualSynthV2() {
       tremoloRef.current = null;
       filterSweepLFORef.current = null;
       sweepLFOGainRef.current = null;
+      backgroundGainRef.current = null;
       masterGainRef.current = null;
       
       setCurrentScreen('presets');
@@ -850,7 +924,7 @@ function VisualSynthV2() {
             color: teColors.textDim,
             letterSpacing: '0.05em'
           }}>
-            VERSION 3.0
+            VERSION 4.0
           </div>
         </div>
 
