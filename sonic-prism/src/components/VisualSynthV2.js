@@ -937,34 +937,34 @@ function VisualSynthV2() {
   if (currentScreen === 'presets') {
     return (
       <div style={{
-        minHeight: '100vh',
         height: '100vh',
         background: teColors.background,
         color: teColors.text,
         ...teFont,
         display: 'flex',
         flexDirection: 'column',
-        padding: '15px',
+        padding: '10px',
+        boxSizing: 'border-box',
         overflow: 'hidden'
       }}>
-        {/* Header */}
+        {/* Header - More compact */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '12px',
-          paddingBottom: '10px',
+          marginBottom: '8px',
+          paddingBottom: '8px',
           borderBottom: `1px solid ${teColors.grid}`,
           flexShrink: 0
         }}>
           <div style={{
-            fontSize: '22px',
+            fontSize: '18px',
             fontWeight: '300',
-            marginBottom: '6px',
+            marginBottom: '4px',
             letterSpacing: '0.1em'
           }}>
             VISUAL SYNTH
           </div>
           <div style={{
-            fontSize: '11px',
+            fontSize: '10px',
             color: teColors.textDim,
             letterSpacing: '0.05em'
           }}>
@@ -972,13 +972,14 @@ function VisualSynthV2() {
           </div>
         </div>
 
-        {/* Preset Grid - Completely rebuilt */}
+        {/* Preset Grid - Fixed responsive layout */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '12px',
+          gap: '8px',
           flex: 1,
-          height: 'calc(100vh - 130px)' // Precise calculation
+          minHeight: 0, // Critical for proper flex behavior
+          overflow: 'hidden'
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
@@ -990,7 +991,7 @@ function VisualSynthV2() {
                 border: `2px solid ${teColors.grid}`,
                 borderRadius: '0px',
                 color: teColors.text,
-                padding: '20px 16px', // Proper comfortable padding
+                padding: '10px 8px', // Compact padding for mobile
                 cursor: 'pointer',
                 
                 // Layout
@@ -1046,9 +1047,9 @@ function VisualSynthV2() {
               <div style={{ position: 'relative', zIndex: 2 }}>
                 {/* Preset title */}
                 <div style={{
-                  fontSize: '16px',
+                  fontSize: '14px',
                   fontWeight: '600',
-                  marginBottom: '10px',
+                  marginBottom: '6px',
                   letterSpacing: '0.05em',
                   lineHeight: '1.2'
                 }}>
@@ -1057,10 +1058,10 @@ function VisualSynthV2() {
                 
                 {/* Description */}
                 <div style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   color: teColors.textDim,
-                  marginBottom: '14px',
-                  lineHeight: '1.4',
+                  marginBottom: '8px',
+                  lineHeight: '1.3',
                   opacity: 0.9
                 }}>
                   {preset.description}
@@ -1086,11 +1087,11 @@ function VisualSynthV2() {
           ))}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Compact */}
         <div style={{
           textAlign: 'center',
-          marginTop: '10px',
-          paddingTop: '10px',
+          marginTop: '8px',
+          paddingTop: '8px',
           borderTop: `1px solid ${teColors.grid}`,
           fontSize: '9px',
           color: teColors.textDim,
