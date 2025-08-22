@@ -987,10 +987,11 @@ function VisualSynthV2() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '12px',
+          gap: '10px',
           flex: 1,
           minHeight: 0, // Allow grid to shrink
-          maxHeight: 'calc(100vh - 180px)' // Reserve space for header + footer
+          maxHeight: 'calc(100vh - 140px)', // Tighter space calculation
+          height: 'calc(100vh - 140px)' // Fixed height for true responsiveness
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
@@ -1000,7 +1001,7 @@ function VisualSynthV2() {
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
                 color: teColors.text,
-                padding: '12px 10px', // Reduced button height
+                padding: '10px 8px', // Further reduced button height
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
@@ -1035,6 +1036,7 @@ function VisualSynthV2() {
                 position: 'absolute',
                 top: 0,
                 left: 0,
+                right: 0,
                 height: '100%',
                 backgroundColor: preset.color,
                 opacity: 0.3,
@@ -1042,7 +1044,8 @@ function VisualSynthV2() {
                        loadingAnimations[preset.id] === 'wipe-out' ? '0%' : '0%',
                 transition: loadingAnimations[preset.id] === 'wipe-in' ? 'width 0.2s ease-out' :
                            loadingAnimations[preset.id] === 'wipe-out' ? 'width 0.15s ease-in' : 'none',
-                zIndex: 1
+                zIndex: 1,
+                transformOrigin: 'left center'
               }} />
               
               {/* Top content */}
@@ -1051,7 +1054,7 @@ function VisualSynthV2() {
                 <div style={{
                   fontSize: '15px', // Increased back up
                   fontWeight: '600',
-                  marginBottom: '5px', // Slightly reduced margin
+                  marginBottom: '4px', // Further reduced margin
                   letterSpacing: '0.05em'
                 }}>
                   {preset.name}
@@ -1061,8 +1064,8 @@ function VisualSynthV2() {
                 <div style={{
                   fontSize: '10px', // Increased back up
                   color: teColors.textDim,
-                  marginBottom: '6px', // Reduced margin
-                  lineHeight: '1.2'
+                  marginBottom: '4px', // Further reduced margin
+                  lineHeight: '1.1'
                 }}>
                   {preset.description}
                 </div>
