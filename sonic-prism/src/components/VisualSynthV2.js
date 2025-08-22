@@ -928,25 +928,25 @@ function VisualSynthV2() {
         {/* Header */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '20px',
-          paddingBottom: '15px',
+          marginBottom: '15px',
+          paddingBottom: '12px',
           borderBottom: `1px solid ${teColors.grid}`,
           flexShrink: 0
         }}>
           <div style={{
-            fontSize: '24px',
+            fontSize: '22px',
             fontWeight: '300',
-            marginBottom: '8px',
+            marginBottom: '6px',
             letterSpacing: '0.1em'
           }}>
             VISUAL SYNTH
           </div>
           <div style={{
-            fontSize: '12px',
+            fontSize: '11px',
             color: teColors.textDim,
             letterSpacing: '0.05em'
           }}>
-            VERSION 4.0
+            by RALPH // Vers 4.0
           </div>
         </div>
 
@@ -954,9 +954,10 @@ function VisualSynthV2() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '15px',
+          gap: '12px',
           flex: 1,
-          minHeight: 0 // Allow grid to shrink
+          minHeight: 0, // Allow grid to shrink
+          maxHeight: 'calc(100vh - 180px)' // Reserve space for header + footer
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
@@ -966,7 +967,7 @@ function VisualSynthV2() {
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
                 color: teColors.text,
-                padding: '20px 15px', // Reduced padding
+                padding: '15px 12px', // Further reduced padding
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
@@ -974,6 +975,7 @@ function VisualSynthV2() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
+                minHeight: 0, // Allow button to shrink
                 ...teFont
               }}
               onMouseEnter={(e) => {
@@ -999,9 +1001,9 @@ function VisualSynthV2() {
               <div>
                 {/* Preset name */}
                 <div style={{
-                  fontSize: '15px', // Slightly smaller
+                  fontSize: '14px', // Smaller
                   fontWeight: '600',
-                  marginBottom: '8px', // Reduced margin
+                  marginBottom: '6px', // Reduced margin
                   letterSpacing: '0.05em'
                 }}>
                   {preset.name}
@@ -1009,10 +1011,10 @@ function VisualSynthV2() {
                 
                 {/* Description */}
                 <div style={{
-                  fontSize: '10px', // Slightly smaller
+                  fontSize: '9px', // Smaller
                   color: teColors.textDim,
-                  marginBottom: '12px', // Reduced margin
-                  lineHeight: '1.3'
+                  marginBottom: '8px', // Reduced margin
+                  lineHeight: '1.2'
                 }}>
                   {preset.description}
                 </div>
@@ -1020,13 +1022,14 @@ function VisualSynthV2() {
               
               {/* Technical specs - bottom */}
               <div style={{
-                fontSize: '8px', // Smaller
+                fontSize: '7px', // Smaller
                 color: teColors.textDim,
                 textAlign: 'left',
-                fontFamily: 'monospace'
+                fontFamily: 'monospace',
+                lineHeight: '1.3'
               }}>
                 <div>KEY: {preset.key.replace('_', ' ')}</div>
-                <div>SWEEP: {preset.filterSweep.type.toUpperCase()} @ {preset.filterSweep.speed}Hz</div>
+                <div>SWEEP: {preset.filterSweep.type.toUpperCase()}</div>
                 <div>ROOT: {preset.rootNote}Hz</div>
               </div>
             </button>
@@ -1036,10 +1039,10 @@ function VisualSynthV2() {
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '15px', // Reduced margin
-          paddingTop: '15px', // Reduced padding
+          marginTop: '12px',
+          paddingTop: '12px',
           borderTop: `1px solid ${teColors.grid}`,
-          fontSize: '10px',
+          fontSize: '9px',
           color: teColors.textDim,
           flexShrink: 0
         }}>
