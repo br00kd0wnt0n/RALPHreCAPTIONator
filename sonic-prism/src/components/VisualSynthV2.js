@@ -93,21 +93,25 @@ const PRESET_CONFIGS = [
     rootNote: 196, // G3
     color: '#ff1744',
     synthType: 'square_pulse',
-    tremoloSpeed: 6, // Aggressive chop
-    reverbMix: 0.3,
-    delayMix: 0.35,
-    delayTime: 0.125, // 8th note
+    tremoloSpeed: 0.8, // Much slower, smoother modulation
+    reverbMix: 0.4,
+    delayMix: 0.3,
+    delayTime: 0.375, // Longer delay time
     filterSweep: {
       type: 'lowpass',
-      speed: 3.0, // Fast aggressive sweep
-      depth: 1200, // Wide dramatic sweep
-      baseFreq: 600
+      speed: 0.4, // Much slower filter sweep
+      depth: 800, // Moderate sweep range
+      baseFreq: 400
+    },
+    sustainSettings: {
+      freqChangeThreshold: 50, // Higher threshold = much longer notes
+      movementThreshold: 70    // Higher threshold = less sensitive
     },
     backgroundAudio: {
       file: '/audio/square_punch.m4a',
       volume: 0.35 // Moderate for aggressive preset
     },
-    description: 'Wide-range aggressive squares with extreme pitch bends and filter sweep'
+    description: 'Smooth sustained squares with slow filter modulation and long notes'
   }
 ];
 
@@ -698,16 +702,31 @@ function VisualSynthV2() {
         
         // Movement-responsive filter - closes dramatically when still
         let baseFilterFreq;
-        if (stillnessIntensity > 0.3) {
-          // When still, filter closes to near-silence
-          baseFilterFreq = 50 + (1 - stillnessIntensity) * 150;
-        } else if (isMoving) {
-          // When moving, filter opens based on movement speed and color
-          const speedBoost = (movementSpeedRef.current / 100) * 1000;
-          const colorBoost = (avgBlue / 255) * 800;
-          baseFilterFreq = 300 + speedBoost + colorBoost;
+        
+        // Special smooth filter behavior for Square Punch
+        if (selectedPreset.id === 'square_punch') {
+          // Smooth visual-responsive filter that opens/closes slowly
+          const brightnessInfluence = (brightness / 255) * 600; // Brightness controls opening
+          const movementInfluence = (movementSpeedRef.current / 100) * 400; // Movement adds boost
+          baseFilterFreq = 200 + brightnessInfluence + movementInfluence;
+          
+          // Gentle stillness closing
+          if (stillnessIntensity > 0.5) {
+            baseFilterFreq *= (1 - stillnessIntensity * 0.6); // Gentle closure
+          }
         } else {
-          baseFilterFreq = 200;
+          // Original logic for other presets
+          if (stillnessIntensity > 0.3) {
+            // When still, filter closes to near-silence
+            baseFilterFreq = 50 + (1 - stillnessIntensity) * 150;
+          } else if (isMoving) {
+            // When moving, filter opens based on movement speed and color
+            const speedBoost = (movementSpeedRef.current / 100) * 1000;
+            const colorBoost = (avgBlue / 255) * 800;
+            baseFilterFreq = 300 + speedBoost + colorBoost;
+          } else {
+            baseFilterFreq = 200;
+          }
         }
         
         const filterFreq = Math.max(baseFilterFreq, 50); // Never completely closed
@@ -897,19 +916,22 @@ function VisualSynthV2() {
     return (
       <div style={{
         minHeight: '100vh',
+        height: '100vh',
         background: teColors.background,
         color: teColors.text,
         ...teFont,
         display: 'flex',
         flexDirection: 'column',
-        padding: '20px'
+        padding: '20px',
+        overflow: 'hidden' // Prevent scrolling
       }}>
         {/* Header */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '40px',
-          paddingBottom: '20px',
-          borderBottom: `1px solid ${teColors.grid}`
+          marginBottom: '20px',
+          paddingBottom: '15px',
+          borderBottom: `1px solid ${teColors.grid}`,
+          flexShrink: 0
         }}>
           <div style={{
             fontSize: '24px',
@@ -932,8 +954,9 @@ function VisualSynthV2() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '20px',
-          flex: 1
+          gap: '15px',
+          flex: 1,
+          minHeight: 0 // Allow grid to shrink
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
@@ -943,11 +966,14 @@ function VisualSynthV2() {
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
                 color: teColors.text,
-                padding: '30px 20px',
+                padding: '20px 15px', // Reduced padding
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
                 overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
                 ...teFont
               }}
               onMouseEnter={(e) => {
@@ -969,29 +995,32 @@ function VisualSynthV2() {
                 backgroundColor: preset.color
               }} />
               
-              {/* Preset name */}
-              <div style={{
-                fontSize: '16px',
-                fontWeight: '600',
-                marginBottom: '12px',
-                letterSpacing: '0.05em'
-              }}>
-                {preset.name}
+              {/* Top content */}
+              <div>
+                {/* Preset name */}
+                <div style={{
+                  fontSize: '15px', // Slightly smaller
+                  fontWeight: '600',
+                  marginBottom: '8px', // Reduced margin
+                  letterSpacing: '0.05em'
+                }}>
+                  {preset.name}
+                </div>
+                
+                {/* Description */}
+                <div style={{
+                  fontSize: '10px', // Slightly smaller
+                  color: teColors.textDim,
+                  marginBottom: '12px', // Reduced margin
+                  lineHeight: '1.3'
+                }}>
+                  {preset.description}
+                </div>
               </div>
               
-              {/* Description */}
+              {/* Technical specs - bottom */}
               <div style={{
-                fontSize: '11px',
-                color: teColors.textDim,
-                marginBottom: '16px',
-                lineHeight: '1.4'
-              }}>
-                {preset.description}
-              </div>
-              
-              {/* Technical specs */}
-              <div style={{
-                fontSize: '9px',
+                fontSize: '8px', // Smaller
                 color: teColors.textDim,
                 textAlign: 'left',
                 fontFamily: 'monospace'
@@ -1007,11 +1036,12 @@ function VisualSynthV2() {
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '40px',
-          paddingTop: '20px',
+          marginTop: '15px', // Reduced margin
+          paddingTop: '15px', // Reduced padding
           borderTop: `1px solid ${teColors.grid}`,
           fontSize: '10px',
-          color: teColors.textDim
+          color: teColors.textDim,
+          flexShrink: 0
         }}>
           SELECT A PRESET TO BEGIN
         </div>
