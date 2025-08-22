@@ -1,10 +1,10 @@
 import React from 'react';
-import SonicPrismApp from './components/SonicPrismApp';
+import VisualSynthV2 from './components/VisualSynthV2';
 
 function App() {
   return (
     <div className="App">
-      <SonicPrismApp />
+      <VisualSynthV2 />
     </div>
   );
 }
