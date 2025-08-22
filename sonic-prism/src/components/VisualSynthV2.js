@@ -214,34 +214,23 @@ function VisualSynthV2() {
   const frameCount = useRef(0);
   const performanceTimer = useRef(null);
 
-  // Loading animation effect on component mount
+  // Loading animation effect on component mount - simplified to avoid re-render conflicts
   useEffect(() => {
     if (currentScreen === 'presets') {
-      // Trigger loading animations for each preset in sequence
+      // Use direct DOM manipulation instead of state to avoid re-renders
       PRESET_CONFIGS.forEach((preset, index) => {
         setTimeout(() => {
-          setLoadingAnimations(prev => ({
-            ...prev,
-            [preset.id]: 'wipe-in'
-          }));
-          
-          // Wipe back out after brief pause
-          setTimeout(() => {
-            setLoadingAnimations(prev => ({
-              ...prev,
-              [preset.id]: 'wipe-out'
-            }));
+          const stripeElement = document.querySelector(`[data-preset-stripe="${preset.id}"]`);
+          if (stripeElement) {
+            stripeElement.style.width = '100%';
+            stripeElement.style.transition = 'width 0.25s ease-out';
             
-            // Clear animation after completion
             setTimeout(() => {
-              setLoadingAnimations(prev => ({
-                ...prev,
-                [preset.id]: 'complete'
-              }));
-            }, 150); // Wipe out duration
-            
-          }, 100); // Brief pause at full width
-        }, index * 100); // Stagger each button by 100ms
+              stripeElement.style.width = '0%';
+              stripeElement.style.transition = 'width 0.19s ease-in';
+            }, 100);
+          }
+        }, index * 100);
       });
     }
   }, [currentScreen]);
@@ -996,12 +985,12 @@ function VisualSynthV2() {
           {PRESET_CONFIGS.map((preset) => (
             <button
               key={preset.id}
+              className="preset-button"
               onClick={() => startSynth(preset)}
               style={{
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
                 color: teColors.text,
-                padding: '8px 6px', // Much shorter buttons
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
@@ -1009,10 +998,6 @@ function VisualSynthV2() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                minHeight: 0, // Allow button to shrink
-                maxHeight: 'none', // Prevent CSS override
-                height: 'auto', // Explicit height
-                boxSizing: 'border-box', // Ensure consistent sizing
                 outline: 'none', // Remove focus outline
                 ...teFont
               }}
@@ -1036,21 +1021,21 @@ function VisualSynthV2() {
               }} />
               
               {/* Animated loading stripe */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '100%',
-                backgroundColor: preset.color,
-                opacity: 0.3,
-                width: loadingAnimations[preset.id] === 'wipe-in' ? '100%' :
-                       loadingAnimations[preset.id] === 'wipe-out' ? '0%' : '0%',
-                transition: loadingAnimations[preset.id] === 'wipe-in' ? 'width 0.25s ease-out' :
-                           loadingAnimations[preset.id] === 'wipe-out' ? 'width 0.19s ease-in' : 'none',
-                zIndex: 1,
-                transformOrigin: 'left center'
-              }} />
+              <div 
+                data-preset-stripe={preset.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '100%',
+                  backgroundColor: preset.color,
+                  opacity: 0.3,
+                  width: '0%',
+                  zIndex: 1,
+                  transformOrigin: 'left center'
+                }} 
+              />
               
               {/* Top content */}
               <div style={{ position: 'relative', zIndex: 2 }}>
