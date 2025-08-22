@@ -955,27 +955,27 @@ function VisualSynthV2() {
         ...teFont,
         display: 'flex',
         flexDirection: 'column',
-        padding: '20px',
+        padding: '15px',
         overflow: 'hidden' // Prevent scrolling
       }}>
         {/* Header */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '15px',
-          paddingBottom: '12px',
+          marginBottom: '10px',
+          paddingBottom: '8px',
           borderBottom: `1px solid ${teColors.grid}`,
           flexShrink: 0
         }}>
           <div style={{
-            fontSize: '22px',
+            fontSize: '20px',
             fontWeight: '300',
-            marginBottom: '6px',
+            marginBottom: '4px',
             letterSpacing: '0.1em'
           }}>
             VISUAL SYNTH
           </div>
           <div style={{
-            fontSize: '11px',
+            fontSize: '10px',
             color: teColors.textDim,
             letterSpacing: '0.05em'
           }}>
@@ -990,8 +990,8 @@ function VisualSynthV2() {
           gap: '10px',
           flex: 1,
           minHeight: 0, // Allow grid to shrink
-          maxHeight: 'calc(100vh - 140px)', // Tighter space calculation
-          height: 'calc(100vh - 140px)' // Fixed height for true responsiveness
+          maxHeight: 'calc(100vh - 120px)', // Much tighter space calculation
+          height: 'calc(100vh - 120px)' // Fixed height for true responsiveness
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
@@ -1001,7 +1001,7 @@ function VisualSynthV2() {
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
                 color: teColors.text,
-                padding: '10px 8px', // Further reduced button height
+                padding: '8px 6px', // Much shorter buttons
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
@@ -1042,8 +1042,8 @@ function VisualSynthV2() {
                 opacity: 0.3,
                 width: loadingAnimations[preset.id] === 'wipe-in' ? '100%' :
                        loadingAnimations[preset.id] === 'wipe-out' ? '0%' : '0%',
-                transition: loadingAnimations[preset.id] === 'wipe-in' ? 'width 0.2s ease-out' :
-                           loadingAnimations[preset.id] === 'wipe-out' ? 'width 0.15s ease-in' : 'none',
+                transition: loadingAnimations[preset.id] === 'wipe-in' ? 'width 0.25s ease-out' :
+                           loadingAnimations[preset.id] === 'wipe-out' ? 'width 0.19s ease-in' : 'none',
                 zIndex: 1,
                 transformOrigin: 'left center'
               }} />
@@ -1092,10 +1092,10 @@ function VisualSynthV2() {
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '12px',
-          paddingTop: '12px',
+          marginTop: '8px',
+          paddingTop: '8px',
           borderTop: `1px solid ${teColors.grid}`,
-          fontSize: '9px',
+          fontSize: '8px',
           color: teColors.textDim,
           flexShrink: 0
         }}>
