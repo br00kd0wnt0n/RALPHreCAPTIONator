@@ -933,7 +933,7 @@ function VisualSynthV2() {
     }, 150); // Wait for fade out
   };
 
-  // Preset Selection Screen
+  // Preset Selection Screen - Completely rebuilt
   if (currentScreen === 'presets') {
     return (
       <div style={{
@@ -945,26 +945,26 @@ function VisualSynthV2() {
         display: 'flex',
         flexDirection: 'column',
         padding: '15px',
-        overflow: 'hidden' // Prevent scrolling
+        overflow: 'hidden'
       }}>
         {/* Header */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '10px',
-          paddingBottom: '8px',
+          marginBottom: '12px',
+          paddingBottom: '10px',
           borderBottom: `1px solid ${teColors.grid}`,
           flexShrink: 0
         }}>
           <div style={{
-            fontSize: '20px',
+            fontSize: '22px',
             fontWeight: '300',
-            marginBottom: '4px',
+            marginBottom: '6px',
             letterSpacing: '0.1em'
           }}>
             VISUAL SYNTH
           </div>
           <div style={{
-            fontSize: '10px',
+            fontSize: '11px',
             color: teColors.textDim,
             letterSpacing: '0.05em'
           }}>
@@ -972,33 +972,39 @@ function VisualSynthV2() {
           </div>
         </div>
 
-        {/* Preset Grid */}
+        {/* Preset Grid - Completely rebuilt */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '10px',
+          gap: '12px',
           flex: 1,
-          minHeight: 0, // Allow grid to shrink
-          maxHeight: 'calc(100vh - 120px)', // Much tighter space calculation
-          height: 'calc(100vh - 120px)' // Fixed height for true responsiveness
+          height: 'calc(100vh - 130px)' // Precise calculation
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
               key={preset.id}
-              className="preset-button"
               onClick={() => startSynth(preset)}
               style={{
+                // Base button styles
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
+                borderRadius: '0px',
                 color: teColors.text,
+                padding: '20px 16px', // Proper comfortable padding
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                
+                // Layout
                 position: 'relative',
-                overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                outline: 'none', // Remove focus outline
+                
+                // Behavior
+                transition: 'all 0.2s ease',
+                outline: 'none',
+                overflow: 'hidden',
+                
+                // Font
                 ...teFont
               }}
               onMouseEnter={(e) => {
@@ -1010,7 +1016,7 @@ function VisualSynthV2() {
                 e.target.style.backgroundColor = teColors.surface;
               }}
             >
-              {/* Accent bar */}
+              {/* Left accent stripe */}
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -1020,55 +1026,57 @@ function VisualSynthV2() {
                 backgroundColor: preset.color
               }} />
               
-              {/* Animated loading stripe */}
+              {/* Loading animation stripe */}
               <div 
                 data-preset-stripe={preset.id}
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
-                  right: 0,
                   height: '100%',
                   backgroundColor: preset.color,
-                  opacity: 0.3,
+                  opacity: 0.25,
                   width: '0%',
                   zIndex: 1,
                   transformOrigin: 'left center'
                 }} 
               />
               
-              {/* Top content */}
+              {/* Content container */}
               <div style={{ position: 'relative', zIndex: 2 }}>
-                {/* Preset name */}
+                {/* Preset title */}
                 <div style={{
-                  fontSize: '15px',
+                  fontSize: '16px',
                   fontWeight: '600',
-                  marginBottom: '6px', // Better spacing
-                  letterSpacing: '0.05em'
+                  marginBottom: '10px',
+                  letterSpacing: '0.05em',
+                  lineHeight: '1.2'
                 }}>
                   {preset.name}
                 </div>
                 
                 {/* Description */}
                 <div style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   color: teColors.textDim,
-                  marginBottom: '8px', // Better spacing
-                  lineHeight: '1.3'
+                  marginBottom: '14px',
+                  lineHeight: '1.4',
+                  opacity: 0.9
                 }}>
                   {preset.description}
                 </div>
               </div>
               
-              {/* Technical specs - bottom */}
+              {/* Technical info */}
               <div style={{
-                fontSize: '8px', // Increased back up
+                fontSize: '9px',
                 color: teColors.textDim,
                 textAlign: 'left',
                 fontFamily: 'monospace',
                 lineHeight: '1.3',
                 position: 'relative',
-                zIndex: 2
+                zIndex: 2,
+                opacity: 0.8
               }}>
                 <div>KEY: {preset.key.replace('_', ' ')}</div>
                 <div>SWEEP: {preset.filterSweep.type.toUpperCase()}</div>
@@ -1081,12 +1089,13 @@ function VisualSynthV2() {
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '8px',
-          paddingTop: '8px',
+          marginTop: '10px',
+          paddingTop: '10px',
           borderTop: `1px solid ${teColors.grid}`,
-          fontSize: '8px',
+          fontSize: '9px',
           color: teColors.textDim,
-          flexShrink: 0
+          flexShrink: 0,
+          letterSpacing: '0.05em'
         }}>
           SELECT A PRESET TO BEGIN
         </div>
