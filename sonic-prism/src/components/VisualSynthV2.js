@@ -26,6 +26,10 @@ const PRESET_CONFIGS = [
       depth: 400, // Gentle sweep range
       baseFreq: 800
     },
+    sustainSettings: {
+      freqChangeThreshold: 40, // Higher threshold = longer notes
+      movementThreshold: 50    // Higher threshold = less sensitive
+    },
     description: 'Rich analog warmth with slow tremolo and gentle filter sweep'
   },
   {
@@ -45,7 +49,7 @@ const PRESET_CONFIGS = [
       depth: 800, // Wide sweep for brightness
       baseFreq: 1200
     },
-    description: 'Crystalline leads with fast shimmer and bandpass sweep'
+    description: 'Wide-range crystalline leads with dramatic pitch bends and bandpass sweep'
   },
   {
     id: 'sub_bass',
@@ -63,6 +67,10 @@ const PRESET_CONFIGS = [
       speed: 0.1, // Ultra slow sweep
       depth: 200, // Tight sweep for bass
       baseFreq: 100
+    },
+    sustainSettings: {
+      freqChangeThreshold: 60, // Very high threshold = very long notes
+      movementThreshold: 80    // Very high threshold = much less sensitive
     },
     description: 'Deep sub-bass with ultra-slow highpass sweep'
   },
@@ -83,7 +91,7 @@ const PRESET_CONFIGS = [
       depth: 1200, // Wide dramatic sweep
       baseFreq: 600
     },
-    description: 'Aggressive squares with fast dramatic filter sweep'
+    description: 'Wide-range aggressive squares with extreme pitch bends and filter sweep'
   }
 ];
 
@@ -429,7 +437,11 @@ function VisualSynthV2() {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { 
+          width: { ideal: 640 }, 
+          height: { ideal: 480 },
+          facingMode: { ideal: 'environment' } // Back camera on mobile
+        },
         audio: false
       });
       
@@ -536,25 +548,40 @@ function VisualSynthV2() {
         
         const scaleNotes = MUSICAL_SCALES[selectedPreset.key];
         
-        // Dramatic color-based frequency mapping
+        // Dramatic color-based frequency mapping with expanded octave ranges
         let colorFreq;
         const dominant = Math.max(avgRed, avgGreen, avgBlue);
         
+        // Expand range based on preset for more dramatic variation
+        let octaveMultiplier = 1;
+        if (selectedPreset.id === 'crystal_lead' || selectedPreset.id === 'square_punch') {
+          octaveMultiplier = 2; // These presets get much wider range
+        }
+        
         if (avgRed === dominant) {
-          // Red = lower frequencies with wide range
-          colorFreq = selectedPreset.rootNote + (avgRed / 255) * 200;
+          // Red = lower frequencies spanning 2-3 octaves down
+          const baseRange = selectedPreset.rootNote * 0.5; // One octave down
+          colorFreq = baseRange + (avgRed / 255) * (selectedPreset.rootNote * 1.5 * octaveMultiplier);
         } else if (avgGreen === dominant) {
-          // Green = mid frequencies with movement modulation
-          colorFreq = selectedPreset.rootNote * 1.5 + (avgGreen / 255) * 300;
+          // Green = mid frequencies spanning root to 2 octaves up
+          colorFreq = selectedPreset.rootNote + (avgGreen / 255) * (selectedPreset.rootNote * 3 * octaveMultiplier);
         } else {
-          // Blue = higher frequencies, more dramatic jumps
-          colorFreq = selectedPreset.rootNote * 2 + (avgBlue / 255) * 500;
+          // Blue = higher frequencies, spanning 1-4 octaves up
+          const baseHigh = selectedPreset.rootNote * 1.5;
+          colorFreq = baseHigh + (avgBlue / 255) * (selectedPreset.rootNote * 4 * octaveMultiplier);
         }
         
         const quantizedFreq = quantizeToScale(colorFreq, selectedPreset.rootNote, scaleNotes);
         
-        // Movement speed affects pitch modulation dramatically
-        const speedPitchMod = (movementSpeedRef.current / 100) * 100;
+        // Movement speed affects pitch modulation dramatically - expanded for selected presets
+        let speedPitchRange = 100; // Default range
+        if (selectedPreset.id === 'crystal_lead') {
+          speedPitchRange = 300; // Much wider pitch bends for crystal lead
+        } else if (selectedPreset.id === 'square_punch') {
+          speedPitchRange = 200; // Wider pitch bends for square punch
+        }
+        
+        const speedPitchMod = (movementSpeedRef.current / 100) * speedPitchRange;
         const targetFreq = quantizedFreq + speedPitchMod;
         const subFreq = targetFreq * 0.5;
         
@@ -570,11 +597,15 @@ function VisualSynthV2() {
         oscillatorRef.current.type = config.main;
         subOscillatorRef.current.type = config.sub;
         
-        // Smooth frequency changes for longer notes
+        // Smooth frequency changes for longer notes - use preset-specific settings
         const freqDifference = Math.abs(targetFreq - lastFrequencyRef.current);
         
+        // Use preset-specific sustain settings or defaults
+        const freqThreshold = selectedPreset.sustainSettings?.freqChangeThreshold || 20;
+        const movementThreshold = selectedPreset.sustainSettings?.movementThreshold || 30;
+        
         // Only change frequency if there's significant movement or color change
-        const significantChange = freqDifference > 20 || movementSpeedRef.current > 30;
+        const significantChange = freqDifference > freqThreshold || movementSpeedRef.current > movementThreshold;
         
         if (significantChange) {
           frequencyChangeCounterRef.current = 0;
@@ -715,32 +746,76 @@ function VisualSynthV2() {
 
   // Back to presets
   const backToPresets = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    if (performanceTimer.current) {
-      clearInterval(performanceTimer.current);
-      performanceTimer.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    // First, fade out audio to prevent noise
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     }
     
-    // Reset all refs
-    oscillatorRef.current = null;
-    subOscillatorRef.current = null;
-    filterRef.current = null;
-    sweepFilterRef.current = null;
-    gainNodeRef.current = null;
-    tremoloRef.current = null;
-    filterSweepLFORef.current = null;
-    sweepLFOGainRef.current = null;
-    masterGainRef.current = null;
-    
-    setCurrentScreen('presets');
-    setIsActive(false);
-    setSelectedPreset(null);
+    // Stop audio after fade
+    setTimeout(() => {
+      // Stop oscillators gracefully
+      if (oscillatorRef.current) {
+        try {
+          oscillatorRef.current.stop();
+        } catch (e) {
+          console.log('Oscillator already stopped');
+        }
+      }
+      if (subOscillatorRef.current) {
+        try {
+          subOscillatorRef.current.stop();
+        } catch (e) {
+          console.log('Sub oscillator already stopped');
+        }
+      }
+      if (tremoloRef.current) {
+        try {
+          tremoloRef.current.stop();
+        } catch (e) {
+          console.log('Tremolo already stopped');
+        }
+      }
+      if (filterSweepLFORef.current) {
+        try {
+          filterSweepLFORef.current.stop();
+        } catch (e) {
+          console.log('Filter sweep LFO already stopped');
+        }
+      }
+      
+      // Stop video stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      // Clear performance timer
+      if (performanceTimer.current) {
+        clearInterval(performanceTimer.current);
+        performanceTimer.current = null;
+      }
+      
+      // Close audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      
+      // Reset all refs
+      oscillatorRef.current = null;
+      subOscillatorRef.current = null;
+      filterRef.current = null;
+      sweepFilterRef.current = null;
+      gainNodeRef.current = null;
+      tremoloRef.current = null;
+      filterSweepLFORef.current = null;
+      sweepLFOGainRef.current = null;
+      masterGainRef.current = null;
+      
+      setCurrentScreen('presets');
+      setIsActive(false);
+      setSelectedPreset(null);
+    }, 150); // Wait for fade out
   };
 
   // Preset Selection Screen
