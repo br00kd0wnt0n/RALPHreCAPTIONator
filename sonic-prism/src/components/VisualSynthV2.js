@@ -1041,9 +1041,9 @@ function VisualSynthV2() {
               <div style={{ position: 'relative', zIndex: 2 }}>
                 {/* Preset name */}
                 <div style={{
-                  fontSize: '15px', // Increased back up
+                  fontSize: '15px',
                   fontWeight: '600',
-                  marginBottom: '4px', // Further reduced margin
+                  marginBottom: '6px', // Better spacing
                   letterSpacing: '0.05em'
                 }}>
                   {preset.name}
@@ -1051,10 +1051,10 @@ function VisualSynthV2() {
                 
                 {/* Description */}
                 <div style={{
-                  fontSize: '10px', // Increased back up
+                  fontSize: '10px',
                   color: teColors.textDim,
-                  marginBottom: '4px', // Further reduced margin
-                  lineHeight: '1.1'
+                  marginBottom: '8px', // Better spacing
+                  lineHeight: '1.3'
                 }}>
                   {preset.description}
                 </div>

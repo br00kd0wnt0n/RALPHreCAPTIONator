@@ -22,9 +22,9 @@ button {
   appearance: none;
 }
 
-/* Force compact button styles */
+/* Force compact button styles with better internal spacing */
 .preset-button {
-  padding: 8px 6px !important;
+  padding: 12px 10px !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
