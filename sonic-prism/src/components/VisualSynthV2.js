@@ -160,6 +160,7 @@ function VisualSynthV2() {
   const [currentScreen, setCurrentScreen] = useState('presets'); // 'presets' or 'synth'
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [isActive, setIsActive] = useState(false);
+  const [loadingAnimations, setLoadingAnimations] = useState({});
   
   // Audio and visual refs
   const videoRef = useRef(null);
@@ -212,6 +213,38 @@ function VisualSynthV2() {
   const lastFrameTime = useRef(Date.now());
   const frameCount = useRef(0);
   const performanceTimer = useRef(null);
+
+  // Loading animation effect on component mount
+  useEffect(() => {
+    if (currentScreen === 'presets') {
+      // Trigger loading animations for each preset in sequence
+      PRESET_CONFIGS.forEach((preset, index) => {
+        setTimeout(() => {
+          setLoadingAnimations(prev => ({
+            ...prev,
+            [preset.id]: 'wipe-in'
+          }));
+          
+          // Wipe back out after brief pause
+          setTimeout(() => {
+            setLoadingAnimations(prev => ({
+              ...prev,
+              [preset.id]: 'wipe-out'
+            }));
+            
+            // Clear animation after completion
+            setTimeout(() => {
+              setLoadingAnimations(prev => ({
+                ...prev,
+                [preset.id]: 'complete'
+              }));
+            }, 150); // Wipe out duration
+            
+          }, 100); // Brief pause at full width
+        }, index * 100); // Stagger each button by 100ms
+      });
+    }
+  }, [currentScreen]);
 
   // Movement detection refs
   const lastBrightnessRef = useRef(0);
@@ -967,7 +1000,7 @@ function VisualSynthV2() {
                 background: teColors.surface,
                 border: `2px solid ${teColors.grid}`,
                 color: teColors.text,
-                padding: '15px 12px', // Further reduced padding
+                padding: '12px 10px', // Reduced button height
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
@@ -997,13 +1030,28 @@ function VisualSynthV2() {
                 backgroundColor: preset.color
               }} />
               
+              {/* Animated loading stripe */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '100%',
+                backgroundColor: preset.color,
+                opacity: 0.3,
+                width: loadingAnimations[preset.id] === 'wipe-in' ? '100%' :
+                       loadingAnimations[preset.id] === 'wipe-out' ? '0%' : '0%',
+                transition: loadingAnimations[preset.id] === 'wipe-in' ? 'width 0.2s ease-out' :
+                           loadingAnimations[preset.id] === 'wipe-out' ? 'width 0.15s ease-in' : 'none',
+                zIndex: 1
+              }} />
+              
               {/* Top content */}
-              <div>
+              <div style={{ position: 'relative', zIndex: 2 }}>
                 {/* Preset name */}
                 <div style={{
-                  fontSize: '14px', // Smaller
+                  fontSize: '15px', // Increased back up
                   fontWeight: '600',
-                  marginBottom: '6px', // Reduced margin
+                  marginBottom: '5px', // Slightly reduced margin
                   letterSpacing: '0.05em'
                 }}>
                   {preset.name}
@@ -1011,9 +1059,9 @@ function VisualSynthV2() {
                 
                 {/* Description */}
                 <div style={{
-                  fontSize: '9px', // Smaller
+                  fontSize: '10px', // Increased back up
                   color: teColors.textDim,
-                  marginBottom: '8px', // Reduced margin
+                  marginBottom: '6px', // Reduced margin
                   lineHeight: '1.2'
                 }}>
                   {preset.description}
@@ -1022,11 +1070,13 @@ function VisualSynthV2() {
               
               {/* Technical specs - bottom */}
               <div style={{
-                fontSize: '7px', // Smaller
+                fontSize: '8px', // Increased back up
                 color: teColors.textDim,
                 textAlign: 'left',
                 fontFamily: 'monospace',
-                lineHeight: '1.3'
+                lineHeight: '1.3',
+                position: 'relative',
+                zIndex: 2
               }}>
                 <div>KEY: {preset.key.replace('_', ' ')}</div>
                 <div>SWEEP: {preset.filterSweep.type.toUpperCase()}</div>
