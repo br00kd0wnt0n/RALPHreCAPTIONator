@@ -944,6 +944,8 @@ function VisualSynthV2() {
         display: 'flex',
         flexDirection: 'column',
         padding: '10px',
+        paddingTop: 'max(10px, env(safe-area-inset-top))', // Safe area for dynamic island
+        paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
         boxSizing: 'border-box',
         overflow: 'hidden'
       }}>
@@ -979,7 +981,8 @@ function VisualSynthV2() {
           gap: '8px',
           flex: 1,
           minHeight: 0, // Critical for proper flex behavior
-          overflow: 'hidden'
+          overflow: 'hidden',
+          maxHeight: '85%' // Reduce button heights by 15%
         }}>
           {PRESET_CONFIGS.map((preset) => (
             <button
@@ -1111,7 +1114,10 @@ function VisualSynthV2() {
       background: teColors.background,
       color: teColors.text,
       ...teFont,
-      padding: '20px'
+      padding: '20px',
+      paddingTop: 'max(20px, env(safe-area-inset-top))', // Safe area for dynamic island
+      paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+      boxSizing: 'border-box'
     }}>
       {/* Header with back button */}
       <div style={{
