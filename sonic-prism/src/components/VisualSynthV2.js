@@ -514,14 +514,41 @@ function VisualSynthV2() {
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 640 }, 
-          height: { ideal: 480 },
-          facingMode: { ideal: 'environment' } // Back camera on mobile
-        },
-        audio: false
-      });
+      let stream;
+      try {
+        // First try with back camera (environment)
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            width: { ideal: 640 }, 
+            height: { ideal: 480 },
+            facingMode: 'environment' // Back camera on mobile - iOS prefers exact match
+          },
+          audio: false
+        });
+      } catch (backCameraError) {
+        console.log('Back camera failed, trying front camera:', backCameraError);
+        // Fallback to front camera if back camera fails
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { 
+              width: { ideal: 640 }, 
+              height: { ideal: 480 },
+              facingMode: 'user' // Front camera fallback
+            },
+            audio: false
+          });
+        } catch (frontCameraError) {
+          console.log('Front camera failed, trying any camera:', frontCameraError);
+          // Final fallback - any available camera
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { 
+              width: { ideal: 640 }, 
+              height: { ideal: 480 }
+            },
+            audio: false
+          });
+        }
+      }
       
       streamRef.current = stream;
       await initAudio();
@@ -531,35 +558,58 @@ function VisualSynthV2() {
       
       console.log('V3 synth started:', preset.name);
       
+      // Always initialize synth - don't wait for video to work
+      lastFrequencyRef.current = preset.rootNote;
+      applyPresetParameters(preset);
+      
+      // Load background audio for this preset
+      loadBackgroundAudio(preset).then(() => {
+        console.log('Background audio loaded successfully');
+      }).catch(e => {
+        console.log('Background audio loading failed:', e);
+      });
+      
       setTimeout(() => {
+        // Setup video if stream exists
         if (videoRef.current && streamRef.current) {
           videoRef.current.srcObject = streamRef.current;
           videoRef.current.onloadedmetadata = () => {
-            videoRef.current.play();
-            // Initialize frequency tracking with preset root note
-            lastFrequencyRef.current = preset.rootNote;
-            // Apply preset-specific parameters
-            applyPresetParameters(preset);
-            // Load background audio for this preset
-            loadBackgroundAudio(preset).then(() => {
-              console.log('Background audio loaded successfully');
-            }).catch(e => {
-              console.log('Background audio loading failed:', e);
+            videoRef.current.play().catch(e => {
+              console.log('Video play failed:', e);
             });
-            // Start audio fade-in once camera is ready
-            setTimeout(() => {
-              fadeInAudio();
-              // Start background audio after fade-in begins
-              setTimeout(() => {
-                if (backgroundAudioRef.current) {
-                  backgroundAudioRef.current.play().catch(e => {
-                    console.log('Background audio play failed:', e);
-                  });
-                }
-              }, 1000); // Wait for audio to load
-            }, 500); // Small delay to ensure video is stable
           };
         }
+        
+        // Always start audio - iOS requires user interaction so this should work
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().then(() => {
+            console.log('Audio context resumed for iOS');
+            fadeInAudio();
+            setTimeout(() => {
+              if (backgroundAudioRef.current) {
+                backgroundAudioRef.current.play().catch(e => {
+                  console.log('Background audio play failed:', e);
+                });
+              }
+            }, 1000);
+          }).catch(e => {
+            console.log('Audio context resume failed:', e);
+          });
+        } else {
+          fadeInAudio();
+          setTimeout(() => {
+            if (backgroundAudioRef.current) {
+              backgroundAudioRef.current.play().catch(e => {
+                console.log('Background audio play failed:', e);
+              });
+            }
+          }, 1000);
+        }
+        
+        // Always start performance monitoring
+        setTimeout(() => {
+          startPerformanceMonitoring();
+        }, 200);
       }, 100);
       
     } catch (err) {
