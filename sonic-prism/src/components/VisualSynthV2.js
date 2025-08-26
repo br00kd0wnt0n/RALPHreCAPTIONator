@@ -284,12 +284,12 @@ function VisualSynthV2() {
 
     // Main oscillator - will change type based on preset
     oscillatorRef.current = audioContextRef.current.createOscillator();
-    oscillatorRef.current.type = 'sawtooth';
+    oscillatorRef.current.type = 'sawtooth'; // Default, will be set by preset
     oscillatorRef.current.frequency.value = 220;
     
     // Sub oscillator for richness
     subOscillatorRef.current = audioContextRef.current.createOscillator();
-    subOscillatorRef.current.type = 'sine';
+    subOscillatorRef.current.type = 'sine'; // Default, will be set by preset
     subOscillatorRef.current.frequency.value = 110;
     
     // Dynamic filter with higher resonance (movement responsive)
