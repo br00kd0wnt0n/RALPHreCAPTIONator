@@ -45,7 +45,10 @@ const CollaborativeSoundscape = () => {
   // Connect to WebSocket server
   useEffect(() => {
     if (currentScreen === 'session' && !socket) {
-      const newSocket = io('http://localhost:3002');
+      const serverUrl = process.env.NODE_ENV === 'production' 
+        ? `${window.location.protocol}//${window.location.hostname}:3002`
+        : 'http://localhost:3002';
+      const newSocket = io(serverUrl);
       setSocket(newSocket);
       
       newSocket.on('connect', () => {
@@ -74,7 +77,10 @@ const CollaborativeSoundscape = () => {
   // Create session
   const handleCreateSession = async () => {
     await initAudio();
-    const tempSocket = io('http://localhost:3002');
+    const serverUrl = process.env.NODE_ENV === 'production' 
+      ? `${window.location.protocol}//${window.location.hostname}:3002`
+      : 'http://localhost:3002';
+    const tempSocket = io(serverUrl);
     
     // Add connection timeout
     tempSocket.on('connect_error', (error) => {
@@ -98,7 +104,10 @@ const CollaborativeSoundscape = () => {
   // Join session
   const handleJoinSession = async () => {
     await initAudio();
-    const tempSocket = io('http://localhost:3002');
+    const serverUrl = process.env.NODE_ENV === 'production' 
+      ? `${window.location.protocol}//${window.location.hostname}:3002`
+      : 'http://localhost:3002';
+    const tempSocket = io(serverUrl);
     
     // Add connection timeout
     tempSocket.on('connect_error', (error) => {
@@ -170,8 +179,8 @@ const CollaborativeSoundscape = () => {
     },
     welcomeBox: {
       maxWidth: '600px',
-      margin: '100px auto',
-      padding: '40px',
+      margin: window.innerWidth > 768 ? '100px auto' : '20px auto',
+      padding: window.innerWidth > 768 ? '40px' : '20px',
       background: '#ffffff',
       border: '1px solid #e0e0e0',
       borderRadius: '0px',

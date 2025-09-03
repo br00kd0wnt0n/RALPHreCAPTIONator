@@ -13,11 +13,12 @@ const ModeSelector = ({ onSelectMode }) => {
     content: {
       textAlign: 'center',
       color: '#2a2a2a', // Match original Visual Synth
-      padding: '40px',
-      maxWidth: '800px'
+      padding: '20px',
+      maxWidth: '800px',
+      width: '100%'
     },
     title: {
-      fontSize: '48px',
+      fontSize: window.innerWidth > 768 ? '48px' : '32px',
       marginBottom: '12px',
       fontWeight: '300',
       letterSpacing: '0.1em',
@@ -31,21 +32,22 @@ const ModeSelector = ({ onSelectMode }) => {
     },
     cardsContainer: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: '30px',
-      marginTop: '40px'
+      gridTemplateColumns: window.innerWidth > 768 ? '1fr 1fr' : '1fr',
+      gap: '20px',
+      marginTop: '30px',
+      padding: '0 10px'
     },
     card: {
       background: '#ffffff',
       border: '2px solid #e0e0e0',
       borderRadius: '0px',
-      padding: '40px 30px',
+      padding: window.innerWidth > 768 ? '40px 30px' : '20px 15px',
       cursor: 'pointer',
       transition: 'all 0.3s ease'
     },
     cardIcon: {
-      fontSize: '80px',
-      marginBottom: '20px'
+      fontSize: window.innerWidth > 768 ? '80px' : '60px',
+      marginBottom: '15px'
     },
     cardTitle: {
       fontSize: '28px',
