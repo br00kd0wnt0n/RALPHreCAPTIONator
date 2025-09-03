@@ -156,7 +156,7 @@ const createReverbBuffer = (audioContext, duration, decay) => {
   return impulse;
 };
 
-function VisualSynthV2() {
+function VisualSynthV2({ onBack }) {
   const [currentScreen, setCurrentScreen] = useState('presets'); // 'presets' or 'synth'
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [isActive, setIsActive] = useState(false);
@@ -999,28 +999,49 @@ function VisualSynthV2() {
         boxSizing: 'border-box',
         overflow: 'hidden'
       }}>
-        {/* Header - More compact */}
+        {/* Header - More compact with back button */}
         <div style={{
           textAlign: 'center',
           marginBottom: '8px',
           paddingBottom: '8px',
           borderBottom: `1px solid ${teColors.grid}`,
-          flexShrink: 0
+          flexShrink: 0,
+          position: 'relative'
         }}>
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                position: 'absolute',
+                left: '0',
+                top: '0',
+                background: 'none',
+                border: `1px solid ${teColors.grid}`,
+                color: teColors.text,
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '10px',
+                fontFamily: '"Space Mono", "IBM Plex Mono", monospace',
+                letterSpacing: '0.05em'
+              }}
+            >
+              ← BACK
+            </button>
+          )}
           <div style={{
             fontSize: '18px',
             fontWeight: '300',
             marginBottom: '4px',
             letterSpacing: '0.1em'
           }}>
-            VISUAL SYNTH
+            BD-1 WAVELENGTH
           </div>
           <div style={{
             fontSize: '10px',
             color: teColors.textDim,
             letterSpacing: '0.05em'
           }}>
-            by RALPH // Vers 4.0
+            COLLABORATIVE VISUAL SYNTH // by RALPH
           </div>
         </div>
 
