@@ -77,56 +77,128 @@ const CollaborativeSoundscape = () => {
   // Create session
   const handleCreateSession = async () => {
     await initAudio();
-    const serverUrl = process.env.NODE_ENV === 'production' 
-      ? `${window.location.protocol}//${window.location.hostname}:3002`
-      : 'http://localhost:3002';
-    const tempSocket = io(serverUrl);
+    
+    // In production, check if collaboration server is available
+    if (process.env.NODE_ENV === 'production') {
+      // Generate a local session code for offline use
+      const localCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      setSessionCode(localCode);
+      setSessionInfo({ 
+        code: localCode, 
+        users: [{ id: 'local', name: userName, instrument: activeInstrument }],
+        isOffline: true 
+      });
+      setCurrentScreen('session');
+      
+      // Show user that this is offline mode
+      setTimeout(() => {
+        alert('Running in offline mode. To enable collaboration, deploy the WebSocket server to production.');
+      }, 500);
+      return;
+    }
+    
+    // Local development - try to connect to WebSocket server
+    const serverUrl = 'http://localhost:3002';
+    const tempSocket = io(serverUrl, { timeout: 5000 });
     
     // Add connection timeout
-    tempSocket.on('connect_error', (error) => {
-      alert('Could not connect to collaboration server. Please run "npm run server" first.');
+    let connectionTimeout = setTimeout(() => {
       tempSocket.close();
+      // Fallback to offline mode
+      const localCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      setSessionCode(localCode);
+      setSessionInfo({ 
+        code: localCode, 
+        users: [{ id: 'local', name: userName, instrument: activeInstrument }],
+        isOffline: true 
+      });
+      setCurrentScreen('session');
+      alert('Collaboration server not available. Running in offline mode. Start the server with "npm run server" to enable collaboration.');
+    }, 3000);
+    
+    tempSocket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      clearTimeout(connectionTimeout);
+      tempSocket.close();
+      // Already handled by timeout
     });
     
-    tempSocket.emit('create-session', 
-      { name: userName, instrument: activeInstrument },
-      (response) => {
-        if (response.success) {
-          setSessionCode(response.sessionCode);
-          setSessionInfo(response.session);
-          setSocket(tempSocket);
-          setCurrentScreen('session');
+    tempSocket.on('connect', () => {
+      clearTimeout(connectionTimeout);
+      console.log('Socket connected, creating session...');
+      tempSocket.emit('create-session', 
+        { name: userName, instrument: activeInstrument },
+        (response) => {
+          console.log('Session creation response:', response);
+          if (response.success) {
+            setSessionCode(response.sessionCode);
+            setSessionInfo(response.session);
+            setSocket(tempSocket);
+            setCurrentScreen('session');
+          } else {
+            alert('Failed to create session: ' + response.error);
+          }
         }
-      }
-    );
+      );
+    });
   };
   
   // Join session
   const handleJoinSession = async () => {
     await initAudio();
-    const serverUrl = process.env.NODE_ENV === 'production' 
-      ? `${window.location.protocol}//${window.location.hostname}:3002`
-      : 'http://localhost:3002';
-    const tempSocket = io(serverUrl);
+    
+    // In production, show message about offline mode
+    if (process.env.NODE_ENV === 'production') {
+      alert('Collaboration is not available in production. Running in offline mode.');
+      // Switch to offline mode but keep the entered session code for display
+      setSessionInfo({ 
+        code: sessionCode, 
+        users: [{ id: 'local', name: userName, instrument: activeInstrument }],
+        isOffline: true 
+      });
+      setCurrentScreen('session');
+      return;
+    }
+    
+    // Local development - try to connect to WebSocket server
+    const serverUrl = 'http://localhost:3002';
+    const tempSocket = io(serverUrl, { timeout: 5000 });
     
     // Add connection timeout
-    tempSocket.on('connect_error', (error) => {
-      alert('Could not connect to collaboration server. Please run "npm run server" first.');
+    let connectionTimeout = setTimeout(() => {
       tempSocket.close();
+      alert('Could not connect to collaboration server. Running in offline mode. Start the server with "npm run server" to enable collaboration.');
+      // Fallback to offline mode
+      setSessionInfo({ 
+        code: sessionCode, 
+        users: [{ id: 'local', name: userName, instrument: activeInstrument }],
+        isOffline: true 
+      });
+      setCurrentScreen('session');
+    }, 3000);
+    
+    tempSocket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      clearTimeout(connectionTimeout);
+      tempSocket.close();
+      // Already handled by timeout
     });
     
-    tempSocket.emit('join-session', 
-      { sessionCode, userData: { name: userName, instrument: activeInstrument }},
-      (response) => {
-        if (response.success) {
-          setSessionInfo(response.session);
-          setSocket(tempSocket);
-          setCurrentScreen('session');
-        } else {
-          alert(response.error);
+    tempSocket.on('connect', () => {
+      clearTimeout(connectionTimeout);
+      tempSocket.emit('join-session', 
+        { sessionCode, userData: { name: userName, instrument: activeInstrument }},
+        (response) => {
+          if (response.success) {
+            setSessionInfo(response.session);
+            setSocket(tempSocket);
+            setCurrentScreen('session');
+          } else {
+            alert(response.error);
+          }
         }
-      }
-    );
+      );
+    });
   };
   
   // Start recording
@@ -342,10 +414,16 @@ const CollaborativeSoundscape = () => {
           </div>
           
           <button 
-            style={{ ...styles.button, marginTop: '30px' }}
-            onClick={handleCreateSession}
+            style={{ 
+              ...styles.button, 
+              marginTop: '30px',
+              opacity: userName ? 1 : 0.5,
+              cursor: userName ? 'pointer' : 'not-allowed'
+            }}
+            onClick={userName ? handleCreateSession : null}
+            disabled={!userName}
           >
-            Start Session
+            {userName ? 'Start Session' : 'Enter Name First'}
           </button>
         </div>
       </div>
@@ -414,11 +492,17 @@ const CollaborativeSoundscape = () => {
           </div>
           
           <button 
-            style={{ ...styles.button, marginTop: '30px' }}
-            onClick={handleJoinSession}
-            disabled={sessionCode.length !== 6}
+            style={{ 
+              ...styles.button, 
+              marginTop: '30px',
+              opacity: (sessionCode.length === 6 && userName) ? 1 : 0.5,
+              cursor: (sessionCode.length === 6 && userName) ? 'pointer' : 'not-allowed'
+            }}
+            onClick={(sessionCode.length === 6 && userName) ? handleJoinSession : null}
+            disabled={sessionCode.length !== 6 || !userName}
           >
-            Join Session
+            {sessionCode.length === 6 && userName ? 'Join Session' : 
+             !userName ? 'Enter Name First' : 'Enter 6-Character Code'}
           </button>
         </div>
       </div>
@@ -434,7 +518,7 @@ const CollaborativeSoundscape = () => {
           <div>
             <h3 style={{ margin: 0 }}>Session: {sessionCode}</h3>
             <p style={{ margin: '5px 0', opacity: 0.8, fontSize: '14px' }}>
-              {sessionInfo?.users?.length || 1} user(s) connected
+              {sessionInfo?.isOffline ? 'Offline Mode' : `${sessionInfo?.users?.length || 1} user(s) connected`}
             </p>
           </div>
           
