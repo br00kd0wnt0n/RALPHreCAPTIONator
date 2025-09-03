@@ -1,0 +1,15 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "cd server && npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "always"
+
+[[services]]
+name = "sonic-prism-server"
+
+[services.variables]
+PORT = "3002"
+NODE_ENV = "production"

@@ -45,9 +45,8 @@ const CollaborativeSoundscape = () => {
   // Connect to WebSocket server
   useEffect(() => {
     if (currentScreen === 'session' && !socket) {
-      const serverUrl = process.env.NODE_ENV === 'production' 
-        ? `${window.location.protocol}//${window.location.hostname}:3002`
-        : 'http://localhost:3002';
+      // Use environment variable for production, fallback to localhost for dev
+      const serverUrl = process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:3002';
       const newSocket = io(serverUrl);
       setSocket(newSocket);
       
@@ -78,27 +77,8 @@ const CollaborativeSoundscape = () => {
   const handleCreateSession = async () => {
     await initAudio();
     
-    // In production, check if collaboration server is available
-    if (process.env.NODE_ENV === 'production') {
-      // Generate a local session code for offline use
-      const localCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setSessionCode(localCode);
-      setSessionInfo({ 
-        code: localCode, 
-        users: [{ id: 'local', name: userName, instrument: activeInstrument }],
-        isOffline: true 
-      });
-      setCurrentScreen('session');
-      
-      // Show user that this is offline mode
-      setTimeout(() => {
-        alert('Running in offline mode. To enable collaboration, deploy the WebSocket server to production.');
-      }, 500);
-      return;
-    }
-    
-    // Local development - try to connect to WebSocket server
-    const serverUrl = 'http://localhost:3002';
+    // Use environment variable for production, fallback to localhost for dev
+    const serverUrl = process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:3002';
     const tempSocket = io(serverUrl, { timeout: 5000 });
     
     // Add connection timeout
@@ -147,21 +127,8 @@ const CollaborativeSoundscape = () => {
   const handleJoinSession = async () => {
     await initAudio();
     
-    // In production, show message about offline mode
-    if (process.env.NODE_ENV === 'production') {
-      alert('Collaboration is not available in production. Running in offline mode.');
-      // Switch to offline mode but keep the entered session code for display
-      setSessionInfo({ 
-        code: sessionCode, 
-        users: [{ id: 'local', name: userName, instrument: activeInstrument }],
-        isOffline: true 
-      });
-      setCurrentScreen('session');
-      return;
-    }
-    
-    // Local development - try to connect to WebSocket server
-    const serverUrl = 'http://localhost:3002';
+    // Use environment variable for production, fallback to localhost for dev
+    const serverUrl = process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:3002';
     const tempSocket = io(serverUrl, { timeout: 5000 });
     
     // Add connection timeout
