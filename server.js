@@ -216,9 +216,323 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve the caption page
+// Serve a simple form with language toggle
 app.get('/caption', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'caption.html'));
+  res.set('Content-Type', 'text/html');
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Caption Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        #loading {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f9ff;
+            border-left: 4px solid #3498db;
+            display: none;
+            white-space: pre-wrap;
+        }
+        
+        .language-toggle {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        
+        .language-toggle a {
+            padding: 5px 10px;
+            margin-left: 10px;
+            text-decoration: none;
+            color: #3498db;
+        }
+        
+        .language-toggle a.active {
+            font-weight: bold;
+            border-bottom: 2px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-toggle">
+            <a href="#" id="en-toggle" class="active">English</a>
+            <a href="#" id="ja-toggle">日本語</a>
+        </div>
+        
+        <h1 id="title">AI Caption Generator</h1>
+        
+        <form id="captionForm">
+            <input type="hidden" id="language" value="en">
+            
+            <div class="form-group">
+                <label for="draft" id="label-draft">Draft Caption:</label>
+                <textarea id="draft" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="type" id="label-type">Content Type:</label>
+                <select id="type">
+                    <option value="image" id="option-image">Image</option>
+                    <option value="video" id="option-video">Video</option>
+                    <option value="carousel" id="option-carousel">Carousel</option>
+                    <option value="story" id="option-story">Story</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="theme" id="label-theme">Content Theme:</label>
+                <select id="theme">
+                    <option value="product" id="option-product">Product</option>
+                    <option value="lifestyle" id="option-lifestyle">Lifestyle</option>
+                    <option value="behind-the-scenes" id="option-bts">Behind the Scenes</option>
+                    <option value="user-generated" id="option-ugc">User Generated</option>
+                    <option value="promotion" id="option-promo">Promotion</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes" id="label-notes">Additional Notes:</label>
+                <textarea id="notes"></textarea>
+            </div>
+            
+            <button type="submit" id="submit-button">Generate Caption</button>
+        </form>
+        
+        <div id="loading">
+            <p id="loading-text">Generating caption...</p>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Language toggle functionality
+        const enToggle = document.getElementById('en-toggle');
+        const jaToggle = document.getElementById('ja-toggle');
+        const languageField = document.getElementById('language');
+        
+        // Text translations
+        const translations = {
+            en: {
+                title: 'AI Caption Generator',
+                labelDraft: 'Draft Caption:',
+                labelType: 'Content Type:',
+                labelTheme: 'Content Theme:',
+                labelNotes: 'Additional Notes:',
+                submitButton: 'Generate Caption',
+                loadingText: 'Generating caption...',
+                draftPlaceholder: 'Enter your draft caption or description...',
+                notesPlaceholder: 'Add any specific requirements, keywords, or tone preferences...',
+                optionImage: 'Image',
+                optionVideo: 'Video',
+                optionCarousel: 'Carousel',
+                optionStory: 'Story',
+                optionProduct: 'Product',
+                optionLifestyle: 'Lifestyle',
+                optionBts: 'Behind the Scenes',
+                optionUgc: 'User Generated',
+                optionPromo: 'Promotion',
+                errorMessage: 'An error occurred. Please try again.'
+            },
+            ja: {
+                title: '日本語キャプションジェネレーター',
+                labelDraft: 'ドラフトキャプション:',
+                labelType: 'コンテンツタイプ:',
+                labelTheme: 'コンテンツテーマ:',
+                labelNotes: '追加メモ:',
+                submitButton: 'キャプションを生成',
+                loadingText: 'キャプションを生成中...',
+                draftPlaceholder: '投稿したい内容のドラフトキャプションや説明を入力してください...',
+                notesPlaceholder: '特定の要件、キーワード、またはトーンの好みを追加してください...',
+                optionImage: '画像',
+                optionVideo: '動画',
+                optionCarousel: 'カルーセル',
+                optionStory: 'ストーリー',
+                optionProduct: '製品',
+                optionLifestyle: 'ライフスタイル',
+                optionBts: '舞台裏',
+                optionUgc: 'ユーザー生成',
+                optionPromo: 'プロモーション',
+                errorMessage: 'エラーが発生しました。もう一度お試しください。'
+            }
+        };
+        
+        // Change language function
+        function changeLanguage(lang) {
+            // Update language field
+            languageField.value = lang;
+            
+            // Update active toggle
+            if (lang === 'en') {
+                enToggle.classList.add('active');
+                jaToggle.classList.remove('active');
+            } else {
+                enToggle.classList.remove('active');
+                jaToggle.classList.add('active');
+            }
+            
+            // Update text elements
+            const t = translations[lang];
+            document.getElementById('title').textContent = t.title;
+            document.getElementById('label-draft').textContent = t.labelDraft;
+            document.getElementById('label-type').textContent = t.labelType;
+            document.getElementById('label-theme').textContent = t.labelTheme;
+            document.getElementById('label-notes').textContent = t.labelNotes;
+            document.getElementById('submit-button').textContent = t.submitButton;
+            document.getElementById('loading-text').textContent = t.loadingText;
+            
+            // Update placeholders
+            document.getElementById('draft').placeholder = t.draftPlaceholder;
+            document.getElementById('notes').placeholder = t.notesPlaceholder;
+            
+            // Update options
+            document.getElementById('option-image').textContent = t.optionImage;
+            document.getElementById('option-video').textContent = t.optionVideo;
+            document.getElementById('option-carousel').textContent = t.optionCarousel;
+            document.getElementById('option-story').textContent = t.optionStory;
+            document.getElementById('option-product').textContent = t.optionProduct;
+            document.getElementById('option-lifestyle').textContent = t.optionLifestyle;
+            document.getElementById('option-bts').textContent = t.optionBts;
+            document.getElementById('option-ugc').textContent = t.optionUgc;
+            document.getElementById('option-promo').textContent = t.optionPromo;
+        }
+        
+        // Add event listeners to language toggles
+        enToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            changeLanguage('en');
+        });
+        
+        jaToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            changeLanguage('ja');
+        });
+        
+        // Form submission handler
+        document.getElementById('captionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            // Get form data
+            const draftCaption = document.getElementById('draft').value;
+            const contentType = document.getElementById('type').value;
+            const contentTheme = document.getElementById('theme').value;
+            const additionalNotes = document.getElementById('notes').value;
+            const language = document.getElementById('language').value;
+            
+            try {
+                // Send request to API
+                const response = await fetch('/api/generate-caption', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        draftCaption,
+                        contentType,
+                        contentTheme,
+                        additionalNotes,
+                        language
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                // Display result
+                document.getElementById('result').textContent = data.caption;
+                document.getElementById('result').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessage = language === 'ja' ? 
+                    translations.ja.errorMessage : 
+                    translations.en.errorMessage;
+                document.getElementById('result').textContent = errorMessage;
+                document.getElementById('result').style.display = 'block';
+            } finally {
+                // Hide loading indicator
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+        
+        // Initialize with English
+        changeLanguage('en');
+    </script>
+</body>
+</html>
+  `);
 });
 
 // Start the server
